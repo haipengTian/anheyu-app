@@ -1,0 +1,2 @@
+# shell 脚本固定 LF，避免 Windows(core.autocrlf=true) 检出成 CRLF 后 bash / 容器 entrypoint 无法执行
+*.sh text eol=lf
