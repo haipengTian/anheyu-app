@@ -47,6 +47,7 @@ import (
 	config_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/config"
 	direct_link_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/direct_link"
 	doc_series_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/doc_series"
+	essay_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/essay" // [custom]
 	file_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/file"
 	image_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/image"
 	link_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/link"
@@ -85,6 +86,7 @@ import (
 	config_service "github.com/anzhiyu-c/anheyu-app/pkg/service/config"
 	"github.com/anzhiyu-c/anheyu-app/pkg/service/direct_link"
 	doc_series_service "github.com/anzhiyu-c/anheyu-app/pkg/service/doc_series"
+	essay_service "github.com/anzhiyu-c/anheyu-app/pkg/service/essay" // [custom]
 	file_service "github.com/anzhiyu-c/anheyu-app/pkg/service/file"
 	"github.com/anzhiyu-c/anheyu-app/pkg/service/file_info"
 	geetest_service "github.com/anzhiyu-c/anheyu-app/pkg/service/geetest"
@@ -710,6 +712,9 @@ func NewAppWithOptions(content embed.FS, opts AppOptions) (*App, func(), error) 
 		router.SetupFrontend(engine, settingSvc, articleSvc, cacheSvc, content, cfg, pageRepo)
 	}
 	appRouter.Setup(engine)
+	// [custom] 即刻短文：独立注册，减少与上游的合并冲突
+	essayHandler := essay_handler.NewHandler(essay_service.NewService(ent_impl.NewEssayRepo(entClient)))
+	router.RegisterEssayRoutes(engine, essayHandler, mw)
 	cacheHandler := newCacheManagement(revalidateSvc, imageStyleCache, articleRepo, opts.CacheIndexProjection)
 	registerCacheManagementRoutes(engine, mw, cacheHandler)
 
