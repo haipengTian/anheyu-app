@@ -96,7 +96,7 @@
 
 ## 4. 内容迁移
 
-**工具**：`tools/hexo-migrate/`（Node.js，放在 fork 仓库中，全部为新文件）。
+**工具**：`tools/hexo-migrate/`（Node.js，全部为新文件）。实施计划阶段改为放在**前台仓库**：它要复用前台的 `src/lib/marked-extensions.ts` 渲染 HTML，工具有独立的 `package.json`，不改前台根目录的依赖。
 
 ### 4.1 文章（21 篇已发布 + 5 篇草稿）
 
@@ -150,7 +150,7 @@
 **后台数据清理（不改代码）**：后端初始化时会写入两个「安知鱼」默认友链，以及隐私政策页、版权页（正文里链接到 `/update`），在后台删除或改写。
 
 **代码改动（只有两处）**：
-- `src/utils/console-printer.ts`：控制台固定打印「欢迎使用安知鱼 / Powered by AnHeYu / 你正在访问安知鱼的博客」，改为读取站点配置中的名称
+- `src/utils/console-printer.ts`：控制台固定打印「欢迎使用安知鱼 / Powered by AnHeYu / 你正在访问安知鱼的博客」，改为读取站点配置中的名称（实施时新建 `console-printer-custom.ts`，只改 `src/providers/console-printer.tsx` 的一行 import，不动上游原文件）
 - `src/app/(frontend)/posts/[id]/page.tsx`、`src/app/(frontend)/doc/[id]/page.tsx`：`<meta name="author">` 在文章没有 `copyright_author` 时默认写「安知鱼」，改为默认取站点拥有者的名字（迁移过来的文章都会走到这个默认值）
 
 **不改的**：前台其余写死的「AnHeYu / 安和鱼」都是配置为空时的兜底值，配好之后不会出现；后台管理界面里的占位文字只有管理员能看到。改它们只会增加和上游合并时的冲突。
