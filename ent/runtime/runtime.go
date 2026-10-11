@@ -13,6 +13,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/ent/directlink"
 	"github.com/anzhiyu-c/anheyu-app/ent/docseries"
 	"github.com/anzhiyu-c/anheyu-app/ent/entity"
+	"github.com/anzhiyu-c/anheyu-app/ent/essay"
 	"github.com/anzhiyu-c/anheyu-app/ent/file"
 	"github.com/anzhiyu-c/anheyu-app/ent/fileentity"
 	"github.com/anzhiyu-c/anheyu-app/ent/link"
@@ -462,6 +463,62 @@ func init() {
 	entityDescDimension := entityFields[12].Descriptor()
 	// entity.DimensionValidator is a validator for the "dimension" field. It is called by the builders before save.
 	entity.DimensionValidator = entityDescDimension.Validators[0].(func(string) error)
+	essayFields := schema.Essay{}.Fields()
+	_ = essayFields
+	// essayDescCreatedAt is the schema descriptor for created_at field.
+	essayDescCreatedAt := essayFields[1].Descriptor()
+	// essay.DefaultCreatedAt holds the default value on creation for the created_at field.
+	essay.DefaultCreatedAt = essayDescCreatedAt.Default.(func() time.Time)
+	// essayDescUpdatedAt is the schema descriptor for updated_at field.
+	essayDescUpdatedAt := essayFields[2].Descriptor()
+	// essay.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	essay.DefaultUpdatedAt = essayDescUpdatedAt.Default.(func() time.Time)
+	// essay.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	essay.UpdateDefaultUpdatedAt = essayDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// essayDescContent is the schema descriptor for content field.
+	essayDescContent := essayFields[3].Descriptor()
+	// essay.DefaultContent holds the default value on creation for the content field.
+	essay.DefaultContent = essayDescContent.Default.(string)
+	// essayDescPublishedAt is the schema descriptor for published_at field.
+	essayDescPublishedAt := essayFields[4].Descriptor()
+	// essay.DefaultPublishedAt holds the default value on creation for the published_at field.
+	essay.DefaultPublishedAt = essayDescPublishedAt.Default.(func() time.Time)
+	// essayDescAddress is the schema descriptor for address field.
+	essayDescAddress := essayFields[7].Descriptor()
+	// essay.DefaultAddress holds the default value on creation for the address field.
+	essay.DefaultAddress = essayDescAddress.Default.(string)
+	// essayDescSource is the schema descriptor for source field.
+	essayDescSource := essayFields[8].Descriptor()
+	// essay.DefaultSource holds the default value on creation for the source field.
+	essay.DefaultSource = essayDescSource.Default.(string)
+	// essayDescLinkURL is the schema descriptor for link_url field.
+	essayDescLinkURL := essayFields[9].Descriptor()
+	// essay.DefaultLinkURL holds the default value on creation for the link_url field.
+	essay.DefaultLinkURL = essayDescLinkURL.Default.(string)
+	// essayDescLinkTitle is the schema descriptor for link_title field.
+	essayDescLinkTitle := essayFields[10].Descriptor()
+	// essay.DefaultLinkTitle holds the default value on creation for the link_title field.
+	essay.DefaultLinkTitle = essayDescLinkTitle.Default.(string)
+	// essayDescMusicID is the schema descriptor for music_id field.
+	essayDescMusicID := essayFields[11].Descriptor()
+	// essay.DefaultMusicID holds the default value on creation for the music_id field.
+	essay.DefaultMusicID = essayDescMusicID.Default.(string)
+	// essayDescMusicName is the schema descriptor for music_name field.
+	essayDescMusicName := essayFields[12].Descriptor()
+	// essay.DefaultMusicName holds the default value on creation for the music_name field.
+	essay.DefaultMusicName = essayDescMusicName.Default.(string)
+	// essayDescMusicArtist is the schema descriptor for music_artist field.
+	essayDescMusicArtist := essayFields[13].Descriptor()
+	// essay.DefaultMusicArtist holds the default value on creation for the music_artist field.
+	essay.DefaultMusicArtist = essayDescMusicArtist.Default.(string)
+	// essayDescMusicCover is the schema descriptor for music_cover field.
+	essayDescMusicCover := essayFields[14].Descriptor()
+	// essay.DefaultMusicCover holds the default value on creation for the music_cover field.
+	essay.DefaultMusicCover = essayDescMusicCover.Default.(string)
+	// essayDescIsPublished is the schema descriptor for is_published field.
+	essayDescIsPublished := essayFields[15].Descriptor()
+	// essay.DefaultIsPublished holds the default value on creation for the is_published field.
+	essay.DefaultIsPublished = essayDescIsPublished.Default.(bool)
 	fileMixin := schema.File{}.Mixin()
 	fileMixinHooks0 := fileMixin[0].Hooks()
 	file.Hooks[0] = fileMixinHooks0[0]

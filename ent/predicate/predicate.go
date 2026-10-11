@@ -30,6 +30,9 @@ type DocSeries func(*sql.Selector)
 // Entity is the predicate function for entity builders.
 type Entity func(*sql.Selector)
 
+// Essay is the predicate function for essay builders.
+type Essay func(*sql.Selector)
+
 // File is the predicate function for file builders.
 type File func(*sql.Selector)
 

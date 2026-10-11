@@ -20,6 +20,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/ent/directlink"
 	"github.com/anzhiyu-c/anheyu-app/ent/docseries"
 	"github.com/anzhiyu-c/anheyu-app/ent/entity"
+	"github.com/anzhiyu-c/anheyu-app/ent/essay"
 	"github.com/anzhiyu-c/anheyu-app/ent/file"
 	"github.com/anzhiyu-c/anheyu-app/ent/fileentity"
 	"github.com/anzhiyu-c/anheyu-app/ent/link"
@@ -109,6 +110,7 @@ func checkColumn(t, c string) error {
 			directlink.Table:             directlink.ValidColumn,
 			docseries.Table:              docseries.ValidColumn,
 			entity.Table:                 entity.ValidColumn,
+			essay.Table:                  essay.ValidColumn,
 			file.Table:                   file.ValidColumn,
 			fileentity.Table:             fileentity.ValidColumn,
 			link.Table:                   link.ValidColumn,

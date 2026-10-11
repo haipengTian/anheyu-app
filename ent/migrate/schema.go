@@ -352,6 +352,39 @@ var (
 		Columns:    EntitiesColumns,
 		PrimaryKey: []*schema.Column{EntitiesColumns[0]},
 	}
+	// EssaysColumns holds the columns for the "essays" table.
+	EssaysColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "更新时间"},
+		{Name: "content", Type: field.TypeString, Size: 2147483647, Comment: "文字内容", Default: ""},
+		{Name: "published_at", Type: field.TypeTime, Comment: "发布时间，可手动指定"},
+		{Name: "images", Type: field.TypeJSON, Nullable: true, Comment: "图片 URL 列表"},
+		{Name: "videos", Type: field.TypeJSON, Nullable: true, Comment: "视频 URL 列表"},
+		{Name: "address", Type: field.TypeString, Comment: "地点", Default: ""},
+		{Name: "source", Type: field.TypeString, Comment: "来源", Default: ""},
+		{Name: "link_url", Type: field.TypeString, Comment: "外链地址", Default: ""},
+		{Name: "link_title", Type: field.TypeString, Comment: "外链标题", Default: ""},
+		{Name: "music_id", Type: field.TypeString, Comment: "网易云歌曲 ID", Default: ""},
+		{Name: "music_name", Type: field.TypeString, Comment: "歌名", Default: ""},
+		{Name: "music_artist", Type: field.TypeString, Comment: "歌手", Default: ""},
+		{Name: "music_cover", Type: field.TypeString, Comment: "封面 URL", Default: ""},
+		{Name: "is_published", Type: field.TypeBool, Comment: "是否公开", Default: true},
+	}
+	// EssaysTable holds the schema information for the "essays" table.
+	EssaysTable = &schema.Table{
+		Name:       "essays",
+		Comment:    "即刻短文表",
+		Columns:    EssaysColumns,
+		PrimaryKey: []*schema.Column{EssaysColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "essay_is_published_published_at",
+				Unique:  false,
+				Columns: []*schema.Column{EssaysColumns[15], EssaysColumns[4]},
+			},
+		},
+	}
 	// FilesColumns holds the columns for the "files" table.
 	FilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint, Increment: true},
@@ -1069,6 +1102,7 @@ var (
 		DirectLinksTable,
 		DocSeriesTable,
 		EntitiesTable,
+		EssaysTable,
 		FilesTable,
 		FileEntitiesTable,
 		LinksTable,

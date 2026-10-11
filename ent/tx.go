@@ -28,6 +28,8 @@ type Tx struct {
 	DocSeries *DocSeriesClient
 	// Entity is the client for interacting with the Entity builders.
 	Entity *EntityClient
+	// Essay is the client for interacting with the Essay builders.
+	Essay *EssayClient
 	// File is the client for interacting with the File builders.
 	File *FileClient
 	// FileEntity is the client for interacting with the FileEntity builders.
@@ -209,6 +211,7 @@ func (tx *Tx) init() {
 	tx.DirectLink = NewDirectLinkClient(tx.config)
 	tx.DocSeries = NewDocSeriesClient(tx.config)
 	tx.Entity = NewEntityClient(tx.config)
+	tx.Essay = NewEssayClient(tx.config)
 	tx.File = NewFileClient(tx.config)
 	tx.FileEntity = NewFileEntityClient(tx.config)
 	tx.Link = NewLinkClient(tx.config)

@@ -23,6 +23,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/ent/directlink"
 	"github.com/anzhiyu-c/anheyu-app/ent/docseries"
 	"github.com/anzhiyu-c/anheyu-app/ent/entity"
+	"github.com/anzhiyu-c/anheyu-app/ent/essay"
 	"github.com/anzhiyu-c/anheyu-app/ent/file"
 	"github.com/anzhiyu-c/anheyu-app/ent/fileentity"
 	"github.com/anzhiyu-c/anheyu-app/ent/link"
@@ -67,6 +68,8 @@ type Client struct {
 	DocSeries *DocSeriesClient
 	// Entity is the client for interacting with the Entity builders.
 	Entity *EntityClient
+	// Essay is the client for interacting with the Essay builders.
+	Essay *EssayClient
 	// File is the client for interacting with the File builders.
 	File *FileClient
 	// FileEntity is the client for interacting with the FileEntity builders.
@@ -128,6 +131,7 @@ func (c *Client) init() {
 	c.DirectLink = NewDirectLinkClient(c.config)
 	c.DocSeries = NewDocSeriesClient(c.config)
 	c.Entity = NewEntityClient(c.config)
+	c.Essay = NewEssayClient(c.config)
 	c.File = NewFileClient(c.config)
 	c.FileEntity = NewFileEntityClient(c.config)
 	c.Link = NewLinkClient(c.config)
@@ -249,6 +253,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DirectLink:             NewDirectLinkClient(cfg),
 		DocSeries:              NewDocSeriesClient(cfg),
 		Entity:                 NewEntityClient(cfg),
+		Essay:                  NewEssayClient(cfg),
 		File:                   NewFileClient(cfg),
 		FileEntity:             NewFileEntityClient(cfg),
 		Link:                   NewLinkClient(cfg),
@@ -297,6 +302,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DirectLink:             NewDirectLinkClient(cfg),
 		DocSeries:              NewDocSeriesClient(cfg),
 		Entity:                 NewEntityClient(cfg),
+		Essay:                  NewEssayClient(cfg),
 		File:                   NewFileClient(cfg),
 		FileEntity:             NewFileEntityClient(cfg),
 		Link:                   NewLinkClient(cfg),
@@ -348,10 +354,11 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Album, c.AlbumCategory, c.Article, c.ArticleHistory, c.Comment, c.DirectLink,
-		c.DocSeries, c.Entity, c.File, c.FileEntity, c.Link, c.LinkCategory, c.LinkTag,
-		c.Metadata, c.NotificationType, c.Page, c.PostCategory, c.PostTag, c.Setting,
-		c.StoragePolicy, c.Subscriber, c.Tag, c.URLStat, c.User, c.UserGroup,
-		c.UserInstalledTheme, c.UserNotificationConfig, c.VisitorLog, c.VisitorStat,
+		c.DocSeries, c.Entity, c.Essay, c.File, c.FileEntity, c.Link, c.LinkCategory,
+		c.LinkTag, c.Metadata, c.NotificationType, c.Page, c.PostCategory, c.PostTag,
+		c.Setting, c.StoragePolicy, c.Subscriber, c.Tag, c.URLStat, c.User,
+		c.UserGroup, c.UserInstalledTheme, c.UserNotificationConfig, c.VisitorLog,
+		c.VisitorStat,
 	} {
 		n.Use(hooks...)
 	}
@@ -362,10 +369,11 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Album, c.AlbumCategory, c.Article, c.ArticleHistory, c.Comment, c.DirectLink,
-		c.DocSeries, c.Entity, c.File, c.FileEntity, c.Link, c.LinkCategory, c.LinkTag,
-		c.Metadata, c.NotificationType, c.Page, c.PostCategory, c.PostTag, c.Setting,
-		c.StoragePolicy, c.Subscriber, c.Tag, c.URLStat, c.User, c.UserGroup,
-		c.UserInstalledTheme, c.UserNotificationConfig, c.VisitorLog, c.VisitorStat,
+		c.DocSeries, c.Entity, c.Essay, c.File, c.FileEntity, c.Link, c.LinkCategory,
+		c.LinkTag, c.Metadata, c.NotificationType, c.Page, c.PostCategory, c.PostTag,
+		c.Setting, c.StoragePolicy, c.Subscriber, c.Tag, c.URLStat, c.User,
+		c.UserGroup, c.UserInstalledTheme, c.UserNotificationConfig, c.VisitorLog,
+		c.VisitorStat,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -390,6 +398,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DocSeries.mutate(ctx, m)
 	case *EntityMutation:
 		return c.Entity.mutate(ctx, m)
+	case *EssayMutation:
+		return c.Essay.mutate(ctx, m)
 	case *FileMutation:
 		return c.File.mutate(ctx, m)
 	case *FileEntityMutation:
@@ -1726,6 +1736,139 @@ func (c *EntityClient) mutate(ctx context.Context, m *EntityMutation) (Value, er
 		return (&EntityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Entity mutation op: %q", m.Op())
+	}
+}
+
+// EssayClient is a client for the Essay schema.
+type EssayClient struct {
+	config
+}
+
+// NewEssayClient returns a client for the Essay from the given config.
+func NewEssayClient(c config) *EssayClient {
+	return &EssayClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `essay.Hooks(f(g(h())))`.
+func (c *EssayClient) Use(hooks ...Hook) {
+	c.hooks.Essay = append(c.hooks.Essay, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `essay.Intercept(f(g(h())))`.
+func (c *EssayClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Essay = append(c.inters.Essay, interceptors...)
+}
+
+// Create returns a builder for creating a Essay entity.
+func (c *EssayClient) Create() *EssayCreate {
+	mutation := newEssayMutation(c.config, OpCreate)
+	return &EssayCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Essay entities.
+func (c *EssayClient) CreateBulk(builders ...*EssayCreate) *EssayCreateBulk {
+	return &EssayCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EssayClient) MapCreateBulk(slice any, setFunc func(*EssayCreate, int)) *EssayCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EssayCreateBulk{err: fmt.Errorf("calling to EssayClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EssayCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EssayCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Essay.
+func (c *EssayClient) Update() *EssayUpdate {
+	mutation := newEssayMutation(c.config, OpUpdate)
+	return &EssayUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EssayClient) UpdateOne(_m *Essay) *EssayUpdateOne {
+	mutation := newEssayMutation(c.config, OpUpdateOne, withEssay(_m))
+	return &EssayUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EssayClient) UpdateOneID(id uint) *EssayUpdateOne {
+	mutation := newEssayMutation(c.config, OpUpdateOne, withEssayID(id))
+	return &EssayUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Essay.
+func (c *EssayClient) Delete() *EssayDelete {
+	mutation := newEssayMutation(c.config, OpDelete)
+	return &EssayDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EssayClient) DeleteOne(_m *Essay) *EssayDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EssayClient) DeleteOneID(id uint) *EssayDeleteOne {
+	builder := c.Delete().Where(essay.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EssayDeleteOne{builder}
+}
+
+// Query returns a query builder for Essay.
+func (c *EssayClient) Query() *EssayQuery {
+	return &EssayQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEssay},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Essay entity by its id.
+func (c *EssayClient) Get(ctx context.Context, id uint) (*Essay, error) {
+	return c.Query().Where(essay.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EssayClient) GetX(ctx context.Context, id uint) *Essay {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *EssayClient) Hooks() []Hook {
+	return c.hooks.Essay
+}
+
+// Interceptors returns the client interceptors.
+func (c *EssayClient) Interceptors() []Interceptor {
+	return c.inters.Essay
+}
+
+func (c *EssayClient) mutate(ctx context.Context, m *EssayMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EssayCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EssayUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EssayUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EssayDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Essay mutation op: %q", m.Op())
 	}
 }
 
@@ -4954,14 +5097,14 @@ func (c *VisitorStatClient) mutate(ctx context.Context, m *VisitorStatMutation) 
 type (
 	hooks struct {
 		Album, AlbumCategory, Article, ArticleHistory, Comment, DirectLink, DocSeries,
-		Entity, File, FileEntity, Link, LinkCategory, LinkTag, Metadata,
+		Entity, Essay, File, FileEntity, Link, LinkCategory, LinkTag, Metadata,
 		NotificationType, Page, PostCategory, PostTag, Setting, StoragePolicy,
 		Subscriber, Tag, URLStat, User, UserGroup, UserInstalledTheme,
 		UserNotificationConfig, VisitorLog, VisitorStat []ent.Hook
 	}
 	inters struct {
 		Album, AlbumCategory, Article, ArticleHistory, Comment, DirectLink, DocSeries,
-		Entity, File, FileEntity, Link, LinkCategory, LinkTag, Metadata,
+		Entity, Essay, File, FileEntity, Link, LinkCategory, LinkTag, Metadata,
 		NotificationType, Page, PostCategory, PostTag, Setting, StoragePolicy,
 		Subscriber, Tag, URLStat, User, UserGroup, UserInstalledTheme,
 		UserNotificationConfig, VisitorLog, VisitorStat []ent.Interceptor

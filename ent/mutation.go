@@ -19,6 +19,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/ent/directlink"
 	"github.com/anzhiyu-c/anheyu-app/ent/docseries"
 	"github.com/anzhiyu-c/anheyu-app/ent/entity"
+	"github.com/anzhiyu-c/anheyu-app/ent/essay"
 	"github.com/anzhiyu-c/anheyu-app/ent/file"
 	"github.com/anzhiyu-c/anheyu-app/ent/fileentity"
 	"github.com/anzhiyu-c/anheyu-app/ent/link"
@@ -61,6 +62,7 @@ const (
 	TypeDirectLink             = "DirectLink"
 	TypeDocSeries              = "DocSeries"
 	TypeEntity                 = "Entity"
+	TypeEssay                  = "Essay"
 	TypeFile                   = "File"
 	TypeFileEntity             = "FileEntity"
 	TypeLink                   = "Link"
@@ -13145,6 +13147,1169 @@ func (m *EntityMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Entity edge %s", name)
+}
+
+// EssayMutation represents an operation that mutates the Essay nodes in the graph.
+type EssayMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uint
+	created_at    *time.Time
+	updated_at    *time.Time
+	content       *string
+	published_at  *time.Time
+	images        *[]string
+	appendimages  []string
+	videos        *[]string
+	appendvideos  []string
+	address       *string
+	source        *string
+	link_url      *string
+	link_title    *string
+	music_id      *string
+	music_name    *string
+	music_artist  *string
+	music_cover   *string
+	is_published  *bool
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Essay, error)
+	predicates    []predicate.Essay
+}
+
+var _ ent.Mutation = (*EssayMutation)(nil)
+
+// essayOption allows management of the mutation configuration using functional options.
+type essayOption func(*EssayMutation)
+
+// newEssayMutation creates new mutation for the Essay entity.
+func newEssayMutation(c config, op Op, opts ...essayOption) *EssayMutation {
+	m := &EssayMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEssay,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEssayID sets the ID field of the mutation.
+func withEssayID(id uint) essayOption {
+	return func(m *EssayMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Essay
+		)
+		m.oldValue = func(ctx context.Context) (*Essay, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Essay.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEssay sets the old Essay of the mutation.
+func withEssay(node *Essay) essayOption {
+	return func(m *EssayMutation) {
+		m.oldValue = func(context.Context) (*Essay, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EssayMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EssayMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Essay entities.
+func (m *EssayMutation) SetID(id uint) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EssayMutation) ID() (id uint, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EssayMutation) IDs(ctx context.Context) ([]uint, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uint{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Essay.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EssayMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EssayMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EssayMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EssayMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EssayMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EssayMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetContent sets the "content" field.
+func (m *EssayMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *EssayMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *EssayMutation) ResetContent() {
+	m.content = nil
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (m *EssayMutation) SetPublishedAt(t time.Time) {
+	m.published_at = &t
+}
+
+// PublishedAt returns the value of the "published_at" field in the mutation.
+func (m *EssayMutation) PublishedAt() (r time.Time, exists bool) {
+	v := m.published_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublishedAt returns the old "published_at" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldPublishedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublishedAt: %w", err)
+	}
+	return oldValue.PublishedAt, nil
+}
+
+// ResetPublishedAt resets all changes to the "published_at" field.
+func (m *EssayMutation) ResetPublishedAt() {
+	m.published_at = nil
+}
+
+// SetImages sets the "images" field.
+func (m *EssayMutation) SetImages(s []string) {
+	m.images = &s
+	m.appendimages = nil
+}
+
+// Images returns the value of the "images" field in the mutation.
+func (m *EssayMutation) Images() (r []string, exists bool) {
+	v := m.images
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImages returns the old "images" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldImages(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImages is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImages requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImages: %w", err)
+	}
+	return oldValue.Images, nil
+}
+
+// AppendImages adds s to the "images" field.
+func (m *EssayMutation) AppendImages(s []string) {
+	m.appendimages = append(m.appendimages, s...)
+}
+
+// AppendedImages returns the list of values that were appended to the "images" field in this mutation.
+func (m *EssayMutation) AppendedImages() ([]string, bool) {
+	if len(m.appendimages) == 0 {
+		return nil, false
+	}
+	return m.appendimages, true
+}
+
+// ClearImages clears the value of the "images" field.
+func (m *EssayMutation) ClearImages() {
+	m.images = nil
+	m.appendimages = nil
+	m.clearedFields[essay.FieldImages] = struct{}{}
+}
+
+// ImagesCleared returns if the "images" field was cleared in this mutation.
+func (m *EssayMutation) ImagesCleared() bool {
+	_, ok := m.clearedFields[essay.FieldImages]
+	return ok
+}
+
+// ResetImages resets all changes to the "images" field.
+func (m *EssayMutation) ResetImages() {
+	m.images = nil
+	m.appendimages = nil
+	delete(m.clearedFields, essay.FieldImages)
+}
+
+// SetVideos sets the "videos" field.
+func (m *EssayMutation) SetVideos(s []string) {
+	m.videos = &s
+	m.appendvideos = nil
+}
+
+// Videos returns the value of the "videos" field in the mutation.
+func (m *EssayMutation) Videos() (r []string, exists bool) {
+	v := m.videos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVideos returns the old "videos" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldVideos(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVideos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVideos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVideos: %w", err)
+	}
+	return oldValue.Videos, nil
+}
+
+// AppendVideos adds s to the "videos" field.
+func (m *EssayMutation) AppendVideos(s []string) {
+	m.appendvideos = append(m.appendvideos, s...)
+}
+
+// AppendedVideos returns the list of values that were appended to the "videos" field in this mutation.
+func (m *EssayMutation) AppendedVideos() ([]string, bool) {
+	if len(m.appendvideos) == 0 {
+		return nil, false
+	}
+	return m.appendvideos, true
+}
+
+// ClearVideos clears the value of the "videos" field.
+func (m *EssayMutation) ClearVideos() {
+	m.videos = nil
+	m.appendvideos = nil
+	m.clearedFields[essay.FieldVideos] = struct{}{}
+}
+
+// VideosCleared returns if the "videos" field was cleared in this mutation.
+func (m *EssayMutation) VideosCleared() bool {
+	_, ok := m.clearedFields[essay.FieldVideos]
+	return ok
+}
+
+// ResetVideos resets all changes to the "videos" field.
+func (m *EssayMutation) ResetVideos() {
+	m.videos = nil
+	m.appendvideos = nil
+	delete(m.clearedFields, essay.FieldVideos)
+}
+
+// SetAddress sets the "address" field.
+func (m *EssayMutation) SetAddress(s string) {
+	m.address = &s
+}
+
+// Address returns the value of the "address" field in the mutation.
+func (m *EssayMutation) Address() (r string, exists bool) {
+	v := m.address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddress returns the old "address" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddress: %w", err)
+	}
+	return oldValue.Address, nil
+}
+
+// ResetAddress resets all changes to the "address" field.
+func (m *EssayMutation) ResetAddress() {
+	m.address = nil
+}
+
+// SetSource sets the "source" field.
+func (m *EssayMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *EssayMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *EssayMutation) ResetSource() {
+	m.source = nil
+}
+
+// SetLinkURL sets the "link_url" field.
+func (m *EssayMutation) SetLinkURL(s string) {
+	m.link_url = &s
+}
+
+// LinkURL returns the value of the "link_url" field in the mutation.
+func (m *EssayMutation) LinkURL() (r string, exists bool) {
+	v := m.link_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLinkURL returns the old "link_url" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldLinkURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLinkURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLinkURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLinkURL: %w", err)
+	}
+	return oldValue.LinkURL, nil
+}
+
+// ResetLinkURL resets all changes to the "link_url" field.
+func (m *EssayMutation) ResetLinkURL() {
+	m.link_url = nil
+}
+
+// SetLinkTitle sets the "link_title" field.
+func (m *EssayMutation) SetLinkTitle(s string) {
+	m.link_title = &s
+}
+
+// LinkTitle returns the value of the "link_title" field in the mutation.
+func (m *EssayMutation) LinkTitle() (r string, exists bool) {
+	v := m.link_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLinkTitle returns the old "link_title" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldLinkTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLinkTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLinkTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLinkTitle: %w", err)
+	}
+	return oldValue.LinkTitle, nil
+}
+
+// ResetLinkTitle resets all changes to the "link_title" field.
+func (m *EssayMutation) ResetLinkTitle() {
+	m.link_title = nil
+}
+
+// SetMusicID sets the "music_id" field.
+func (m *EssayMutation) SetMusicID(s string) {
+	m.music_id = &s
+}
+
+// MusicID returns the value of the "music_id" field in the mutation.
+func (m *EssayMutation) MusicID() (r string, exists bool) {
+	v := m.music_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicID returns the old "music_id" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldMusicID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicID: %w", err)
+	}
+	return oldValue.MusicID, nil
+}
+
+// ResetMusicID resets all changes to the "music_id" field.
+func (m *EssayMutation) ResetMusicID() {
+	m.music_id = nil
+}
+
+// SetMusicName sets the "music_name" field.
+func (m *EssayMutation) SetMusicName(s string) {
+	m.music_name = &s
+}
+
+// MusicName returns the value of the "music_name" field in the mutation.
+func (m *EssayMutation) MusicName() (r string, exists bool) {
+	v := m.music_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicName returns the old "music_name" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldMusicName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicName: %w", err)
+	}
+	return oldValue.MusicName, nil
+}
+
+// ResetMusicName resets all changes to the "music_name" field.
+func (m *EssayMutation) ResetMusicName() {
+	m.music_name = nil
+}
+
+// SetMusicArtist sets the "music_artist" field.
+func (m *EssayMutation) SetMusicArtist(s string) {
+	m.music_artist = &s
+}
+
+// MusicArtist returns the value of the "music_artist" field in the mutation.
+func (m *EssayMutation) MusicArtist() (r string, exists bool) {
+	v := m.music_artist
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicArtist returns the old "music_artist" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldMusicArtist(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicArtist is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicArtist requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicArtist: %w", err)
+	}
+	return oldValue.MusicArtist, nil
+}
+
+// ResetMusicArtist resets all changes to the "music_artist" field.
+func (m *EssayMutation) ResetMusicArtist() {
+	m.music_artist = nil
+}
+
+// SetMusicCover sets the "music_cover" field.
+func (m *EssayMutation) SetMusicCover(s string) {
+	m.music_cover = &s
+}
+
+// MusicCover returns the value of the "music_cover" field in the mutation.
+func (m *EssayMutation) MusicCover() (r string, exists bool) {
+	v := m.music_cover
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicCover returns the old "music_cover" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldMusicCover(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicCover is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicCover requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicCover: %w", err)
+	}
+	return oldValue.MusicCover, nil
+}
+
+// ResetMusicCover resets all changes to the "music_cover" field.
+func (m *EssayMutation) ResetMusicCover() {
+	m.music_cover = nil
+}
+
+// SetIsPublished sets the "is_published" field.
+func (m *EssayMutation) SetIsPublished(b bool) {
+	m.is_published = &b
+}
+
+// IsPublished returns the value of the "is_published" field in the mutation.
+func (m *EssayMutation) IsPublished() (r bool, exists bool) {
+	v := m.is_published
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublished returns the old "is_published" field's value of the Essay entity.
+// If the Essay object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EssayMutation) OldIsPublished(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublished is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublished requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublished: %w", err)
+	}
+	return oldValue.IsPublished, nil
+}
+
+// ResetIsPublished resets all changes to the "is_published" field.
+func (m *EssayMutation) ResetIsPublished() {
+	m.is_published = nil
+}
+
+// Where appends a list predicates to the EssayMutation builder.
+func (m *EssayMutation) Where(ps ...predicate.Essay) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EssayMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EssayMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Essay, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EssayMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EssayMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Essay).
+func (m *EssayMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EssayMutation) Fields() []string {
+	fields := make([]string, 0, 15)
+	if m.created_at != nil {
+		fields = append(fields, essay.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, essay.FieldUpdatedAt)
+	}
+	if m.content != nil {
+		fields = append(fields, essay.FieldContent)
+	}
+	if m.published_at != nil {
+		fields = append(fields, essay.FieldPublishedAt)
+	}
+	if m.images != nil {
+		fields = append(fields, essay.FieldImages)
+	}
+	if m.videos != nil {
+		fields = append(fields, essay.FieldVideos)
+	}
+	if m.address != nil {
+		fields = append(fields, essay.FieldAddress)
+	}
+	if m.source != nil {
+		fields = append(fields, essay.FieldSource)
+	}
+	if m.link_url != nil {
+		fields = append(fields, essay.FieldLinkURL)
+	}
+	if m.link_title != nil {
+		fields = append(fields, essay.FieldLinkTitle)
+	}
+	if m.music_id != nil {
+		fields = append(fields, essay.FieldMusicID)
+	}
+	if m.music_name != nil {
+		fields = append(fields, essay.FieldMusicName)
+	}
+	if m.music_artist != nil {
+		fields = append(fields, essay.FieldMusicArtist)
+	}
+	if m.music_cover != nil {
+		fields = append(fields, essay.FieldMusicCover)
+	}
+	if m.is_published != nil {
+		fields = append(fields, essay.FieldIsPublished)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EssayMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case essay.FieldCreatedAt:
+		return m.CreatedAt()
+	case essay.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case essay.FieldContent:
+		return m.Content()
+	case essay.FieldPublishedAt:
+		return m.PublishedAt()
+	case essay.FieldImages:
+		return m.Images()
+	case essay.FieldVideos:
+		return m.Videos()
+	case essay.FieldAddress:
+		return m.Address()
+	case essay.FieldSource:
+		return m.Source()
+	case essay.FieldLinkURL:
+		return m.LinkURL()
+	case essay.FieldLinkTitle:
+		return m.LinkTitle()
+	case essay.FieldMusicID:
+		return m.MusicID()
+	case essay.FieldMusicName:
+		return m.MusicName()
+	case essay.FieldMusicArtist:
+		return m.MusicArtist()
+	case essay.FieldMusicCover:
+		return m.MusicCover()
+	case essay.FieldIsPublished:
+		return m.IsPublished()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EssayMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case essay.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case essay.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case essay.FieldContent:
+		return m.OldContent(ctx)
+	case essay.FieldPublishedAt:
+		return m.OldPublishedAt(ctx)
+	case essay.FieldImages:
+		return m.OldImages(ctx)
+	case essay.FieldVideos:
+		return m.OldVideos(ctx)
+	case essay.FieldAddress:
+		return m.OldAddress(ctx)
+	case essay.FieldSource:
+		return m.OldSource(ctx)
+	case essay.FieldLinkURL:
+		return m.OldLinkURL(ctx)
+	case essay.FieldLinkTitle:
+		return m.OldLinkTitle(ctx)
+	case essay.FieldMusicID:
+		return m.OldMusicID(ctx)
+	case essay.FieldMusicName:
+		return m.OldMusicName(ctx)
+	case essay.FieldMusicArtist:
+		return m.OldMusicArtist(ctx)
+	case essay.FieldMusicCover:
+		return m.OldMusicCover(ctx)
+	case essay.FieldIsPublished:
+		return m.OldIsPublished(ctx)
+	}
+	return nil, fmt.Errorf("unknown Essay field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EssayMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case essay.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case essay.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case essay.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	case essay.FieldPublishedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublishedAt(v)
+		return nil
+	case essay.FieldImages:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImages(v)
+		return nil
+	case essay.FieldVideos:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVideos(v)
+		return nil
+	case essay.FieldAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddress(v)
+		return nil
+	case essay.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case essay.FieldLinkURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLinkURL(v)
+		return nil
+	case essay.FieldLinkTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLinkTitle(v)
+		return nil
+	case essay.FieldMusicID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicID(v)
+		return nil
+	case essay.FieldMusicName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicName(v)
+		return nil
+	case essay.FieldMusicArtist:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicArtist(v)
+		return nil
+	case essay.FieldMusicCover:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicCover(v)
+		return nil
+	case essay.FieldIsPublished:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublished(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Essay field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EssayMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EssayMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EssayMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Essay numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EssayMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(essay.FieldImages) {
+		fields = append(fields, essay.FieldImages)
+	}
+	if m.FieldCleared(essay.FieldVideos) {
+		fields = append(fields, essay.FieldVideos)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EssayMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EssayMutation) ClearField(name string) error {
+	switch name {
+	case essay.FieldImages:
+		m.ClearImages()
+		return nil
+	case essay.FieldVideos:
+		m.ClearVideos()
+		return nil
+	}
+	return fmt.Errorf("unknown Essay nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EssayMutation) ResetField(name string) error {
+	switch name {
+	case essay.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case essay.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case essay.FieldContent:
+		m.ResetContent()
+		return nil
+	case essay.FieldPublishedAt:
+		m.ResetPublishedAt()
+		return nil
+	case essay.FieldImages:
+		m.ResetImages()
+		return nil
+	case essay.FieldVideos:
+		m.ResetVideos()
+		return nil
+	case essay.FieldAddress:
+		m.ResetAddress()
+		return nil
+	case essay.FieldSource:
+		m.ResetSource()
+		return nil
+	case essay.FieldLinkURL:
+		m.ResetLinkURL()
+		return nil
+	case essay.FieldLinkTitle:
+		m.ResetLinkTitle()
+		return nil
+	case essay.FieldMusicID:
+		m.ResetMusicID()
+		return nil
+	case essay.FieldMusicName:
+		m.ResetMusicName()
+		return nil
+	case essay.FieldMusicArtist:
+		m.ResetMusicArtist()
+		return nil
+	case essay.FieldMusicCover:
+		m.ResetMusicCover()
+		return nil
+	case essay.FieldIsPublished:
+		m.ResetIsPublished()
+		return nil
+	}
+	return fmt.Errorf("unknown Essay field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EssayMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EssayMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EssayMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EssayMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EssayMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EssayMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EssayMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Essay unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EssayMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Essay edge %s", name)
 }
 
 // FileMutation represents an operation that mutates the File nodes in the graph.
