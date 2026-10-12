@@ -1,0 +1,9 @@
+# [custom] 服务器上生成的文件不进仓库
+.env
+.env.*
+!.env.example
+data/
+themes/
+static/
+backup/
+backups/
