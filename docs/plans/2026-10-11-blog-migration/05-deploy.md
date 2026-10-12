@@ -23,6 +23,8 @@
 | **A（推荐）** | 在图床/CDN 服务商控制台给 `img.thpvip.cn` 配置免费 HTTPS 证书 | 改动最小；以后写文章还能继续用这个图床 | 要登录 CDN 控制台操作，需确认服务商支持 |
 | B | 把头像、Logo、页脚那几张图上传到新站后台（自带存储），改 `settings.json` 里的地址 | 不再依赖旧图床；只有几张图 | 以后新内容的图片也要传到新站或另找图床 |
 
+**结论（2026-10-12 用户决定）：** 两个方案都不用。暂时不用 `img.thpvip.cn`，以后再接入新图床；在那之前把这 6 张图（头像、页脚上下班 SVG、关于页照片/游戏背景/番剧封面）放在前台仓库 `public/static/brand/`，`settings.json` 里改用 `/static/brand/...` 站内地址（`grep -c "img.thpvip.cn" tools/brand/settings.json` → `0`）。下面的 Step 保留备查。
+
 **Step 1：** 把上表给用户，等用户选。
 **Step 2（A）：** 用户配置完成后验证：`curl -sS -o /dev/null -w "%{http_code}\n" "https://img.thpvip.cn/hexo-blog/%E5%A4%B4%E5%83%8F.jpg"` → `200`，且不加 `-k` 不报证书错误。然后把 `tools/brand/settings.json` 里的 `http://img.thpvip.cn` 全部改成 https 后提交。
 **Step 2（B）：** 用户在新站后台上传图片后，把得到的地址替换进 `settings.json` 并提交；`grep -c "img.thpvip.cn" tools/brand/settings.json` → `0`。
