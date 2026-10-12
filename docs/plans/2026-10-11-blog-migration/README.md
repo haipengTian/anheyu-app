@@ -55,6 +55,7 @@
 | 后端 | `ent/*`（生成代码） | `go generate ./ent` 生成；合并上游冲突时重新生成即可 | 1 |
 | 前台 | `src/config/admin-menu.ts` | 「内容管理」组加一个菜单项 | 2 |
 | 前台 | `src/components/home/HomePageContent.tsx` | 挂载 `EssayBar` | 2 |
+| 前台 | `src/components/home/HomePageContent.test.tsx` | mock 掉 `EssayBar`（测试里没有 `QueryClientProvider`） | 2 |
 | 前台 | `src/components/admin/article-editor/extensions/music-block.tsx` | `fetchMusicDetail` 加 `export` | 2 |
 | 前台 | `src/utils/console-printer.ts` | 控制台欢迎语改为读取站点名 | 4 |
 | 前台 | `src/app/(frontend)/posts/[id]/page.tsx`、`src/app/(frontend)/doc/[id]/page.tsx` | `<meta name="author">` 默认值改为站点拥有者 | 4 |
