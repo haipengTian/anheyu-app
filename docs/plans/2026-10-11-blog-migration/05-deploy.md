@@ -2,9 +2,14 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 在新服务器上用 Docker Compose 跑起二开后的 anheyu-app（HTTPS、每日备份），先挂临时子域名验收，再把 `thpvip.cn` 切过去。
+**Goal:** 在新服务器上用 Docker Compose 跑起二开后的 anheyu-app（HTTPS、每日备份），正式域名 `blog.thpvip.xyz`。
 
-**Architecture:** GitHub Actions 在 `custom` 分支推送时，构建前台（`next build` standalone）和后端（Linux 静态二进制），用上游 Dockerfile 的 `full` 目标打成一个镜像，推送到私有 GHCR。服务器上 4 个容器：`anheyu`（后端，内部再拉起 Next.js）、`postgres:17`、`redis:7`、`caddy`（反向代理 + 自动 HTTPS）。只有 Caddy 暴露 80/443。
+> **2026-10-12 执行时的调整（以此为准）：**
+> - 正式域名改为 `blog.thpvip.xyz`，直接在它上面部署和验收；`thpvip.cn` 和旧 Hexo 站保持原样，D8 取消；新域名不显示备案号。
+> - 服务器上已有主机 nginx 占用 80/443（反代 juku、pansou 等服务），改为复用它做 HTTPS 和反向代理：编排里去掉 Caddy，`anheyu` 只发布到 `127.0.0.1:8091`，nginx 站点配置见 `deploy/nginx/`。下文 D3 里的 Caddy 代码块保留备查，以 `deploy/` 目录里的实际文件为准。
+> - 镜像包随公开的 fork 是公开的，服务器拉取不需要登录 GHCR。
+
+**Architecture:** GitHub Actions 在 `custom` 分支推送时，构建前台（`next build` standalone）和后端（Linux 静态二进制），用上游 Dockerfile 的 `full` 目标打成一个镜像，推送到 GHCR。服务器上 3 个容器：`anheyu`（后端，内部再拉起 Next.js）、`postgres:17`、`redis:7`；主机 nginx 负责 HTTPS 并反代到 `127.0.0.1:8091`。
 
 **前置条件：** 阶段 1、2、4 完成（阶段 3 已跳过）并已推送 `custom` 分支（推送前征得用户同意）；用户提供新服务器（建议 ≥ 2GB 内存、Linux x86_64、能 SSH）和域名解析权限。
 
@@ -307,10 +312,11 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 
 1. 规格检查：`uname -m; free -h; df -h /; cat /etc/os-release | head -2` → x86_64、内存 ≥ 2GB、磁盘余量 ≥ 10GB
 2. 安装 Docker（按发行版官方文档），确认 `docker compose version`
-3. 防火墙只放行 22、80、443
-4. 登录 GHCR：用户在 GitHub 生成只有 `read:packages` 权限的 token，在服务器执行 `docker login ghcr.io -u haipengTian`，粘贴 token（不要发到对话里）
-5. 把 `deploy/` 目录传到服务器，例如 `/opt/anheyu/`；`cp .env.example .env`，用 `openssl rand -hex 24` 生成三个值填进去；`chmod 600 .env`
-6. DNS：添加 `new.thpvip.cn` 的 A 记录指向新服务器；`dig +short new.thpvip.cn` 返回新服务器 IP
+3. 防火墙：主机 firewalld 未启用且还跑着其他服务，**不动主机防火墙**；在云服务商安全组确认放行 80、443
+4. ~~登录 GHCR~~：镜像包是公开的，不需要（以后改成私有时，用只有 `read:packages` 权限的 token 执行 `docker login ghcr.io -u haipengTian`）
+5. 把 `deploy/` 目录放到服务器 `/opt/anheyu/`（仓库是公开的，可以在服务器上 `git clone --depth 1 -b custom` 后复制）；`cp .env.example .env`，用 `openssl rand -hex 24` 生成三个值填进去；`chmod 600 .env`
+6. DNS：添加 `blog.thpvip.xyz` 的 A 记录指向新服务器；`getent hosts blog.thpvip.xyz` 返回新服务器 IP
+7. nginx：按 `deploy/nginx/` 里的说明加站点配置并签发证书，`nginx -t` 通过后 reload
 
 ---
 
@@ -318,12 +324,12 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 
 > 2026-10-12 决定不迁移旧内容（跳过阶段 3），这里不再有数据导入步骤，新站从零开始。
 
-1. 服务器：`cd /opt/anheyu && chmod +x deploy.sh backup.sh && ./deploy.sh` → 4 个容器 `running`/`healthy`
-2. `curl -sS https://new.thpvip.cn/api/public/essays` → `{"code":200,...}`，证书有效（Caddy 自动签发）
-3. 用户在浏览器打开 `https://new.thpvip.cn/login` 注册管理员（第一个注册的账号）
-4. 后台「系统设置」把 `SITE_URL` 设为 `https://new.thpvip.cn`；导入 `tools/brand/settings.json`
+1. 服务器：`cd /opt/anheyu && chmod +x deploy.sh backup.sh && ./deploy.sh` → 3 个容器 `running`/`healthy`；`curl -sS http://127.0.0.1:8091/api/public/essays` → `{"code":200,...}`
+2. `curl -sS https://blog.thpvip.xyz/api/public/essays` → `{"code":200,...}`，证书有效（不加 `-k`）
+3. 用户在浏览器打开 `https://blog.thpvip.xyz/login` 注册管理员（第一个注册的账号）
+4. 后台「系统设置」把 `SITE_URL` 设为 `https://blog.thpvip.xyz`；导入 `tools/brand/settings.json`
 5. 按 `tools/brand/README.md`「导入后还要在后台手动做的」清单逐项处理（默认文章、友链、3 个页面、打赏收款码）；关于页已包含在 `settings.json` 里，不用手填
-6. 把阶段 4 Task R4 Step 3 的残留检查脚本里的 `http://localhost:3000` 换成 `https://new.thpvip.cn` 再跑一遍 → 无输出
+6. 把阶段 4 Task R4 Step 3 的残留检查脚本里的 `http://localhost:3000` 换成 `https://blog.thpvip.xyz` 再跑一遍 → 无输出
 
 ---
 
@@ -355,7 +361,9 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 
 ---
 
-### Task D8：切换正式域名（验收全部通过、用户确认后）
+### ~~Task D8：切换正式域名~~（已取消）
+
+> 2026-10-12 用户决定正式域名用 `blog.thpvip.xyz`，`thpvip.cn` 和旧 Hexo 站保持原样，不再切换。以下原步骤保留备查，**不要执行**。
 
 1. 服务器 `.env`：`SITE_DOMAIN=thpvip.cn`；后台 `SITE_URL` 改为 `https://thpvip.cn`
 2. DNS：`thpvip.cn` 的 A 记录改为新服务器 IP（切换前把 TTL 调低到 300）

@@ -291,7 +291,7 @@ git commit -m "feat(brand): 文章作者元信息默认使用站点拥有者"
 
 导入：后台「系统设置」→ 配置导入，上传 `settings.json`。只覆盖文件里列出的键，其他配置不受影响。
 
-不放在这里的：`SITE_URL`（每个环境不同：本地 http://localhost:3000，线上 https://thpvip.cn），在后台单独设置。
+不放在这里的：`SITE_URL`（每个环境不同：本地 http://localhost:3000，线上 https://blog.thpvip.xyz），在后台单独设置。
 ```
 
 **Step 4：JSON 校验**

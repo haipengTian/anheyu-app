@@ -6,7 +6,7 @@
 
 图片：头像、Logo、页脚上下班图、关于页照片等暂时放在前台仓库 `public/static/brand/`，配置里用 `/static/brand/...` 站内地址（旧图床 `img.thpvip.cn` 证书过期，接入新图床后再换地址）。
 
-不放在这里的：`SITE_URL`（每个环境不同：本地 http://localhost:3000，线上 https://thpvip.cn），在后台单独设置。
+不放在这里的：`SITE_URL`（每个环境不同：本地 http://localhost:3000，线上 https://blog.thpvip.xyz），在后台单独设置。
 
 ## 导入后还要在后台手动做的（每个新环境做一次）
 
@@ -16,7 +16,7 @@
 2. **文章管理**：删除默认文章「欢迎使用 Anheyu-App！」
 3. **友链管理**：删除两条「安知鱼」友链
 4. **页面管理**：
-   - 隐私政策：`blog.anheyu.com` 改为 `thpvip.cn`
+   - 隐私政策：`blog.anheyu.com` 改为 `blog.thpvip.xyz`
    - Cookie 政策：两处「请通过 `anzhiyu-c@qq.com` 与我联系」改为「请通过本站留言与我联系」
    - 版权声明：删除「关于主题样式的版权信息，可以详见 安和鱼应用说明」这一段
 5. **系统设置 → 文章配置 → 打赏配置**：`settings.json` 已关闭打赏并清空了原作者的收款码；上传自己的支付宝/微信收款码后再打开
