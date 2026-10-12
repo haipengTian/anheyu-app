@@ -19,7 +19,16 @@
 3. `cd /opt/anheyu && cp .env.example .env`，用 `openssl rand -hex 24` 生成三个不同的值填进去，`chmod 600 .env`
 4. `chmod +x deploy.sh backup.sh && ./deploy.sh`，确认 `curl -sS http://127.0.0.1:8091/api/public/essays` 返回 `{"code":200,...}`
 5. DNS：`blog.thpvip.xyz` 的 A 记录指向服务器
-6. nginx：把 `nginx/blog.thpvip.xyz.conf` 放到 `/etc/nginx/conf.d/`，签发证书并填好 `ssl_certificate` 路径，`nginx -t && systemctl reload nginx`
+6. nginx 与证书（certbot webroot，和本机其他站点一致）：
+
+   ```bash
+   # ① 先只装 80 端口那段（证书还没签，完整配置里的 443 段会让 nginx -t 失败）
+   sed -n '1,/^}/p' /opt/anheyu/nginx/blog.thpvip.xyz.conf > /etc/nginx/conf.d/blog.thpvip.xyz.conf && nginx -t && systemctl reload nginx
+   # ② 签发证书（续期由 certbot 自带的定时任务负责）
+   certbot certonly --webroot -w /var/www/certbot -d blog.thpvip.xyz
+   # ③ 换成完整配置
+   cp /opt/anheyu/nginx/blog.thpvip.xyz.conf /etc/nginx/conf.d/blog.thpvip.xyz.conf && nginx -t && systemctl reload nginx
+   ```
 7. 浏览器打开 `https://blog.thpvip.xyz/login` 注册管理员（第一个注册的账号）
 8. 后台「系统设置 → 站点信息」把 `SITE_URL` 设为 `https://blog.thpvip.xyz`；「备份导入」导入 `tools/brand/settings.json`
 9. 按 `tools/brand/README.md` 的清单清理初始化数据
