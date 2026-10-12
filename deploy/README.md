@@ -1,19 +1,28 @@
 # 生产部署（[custom] 二开新增）
 
-服务器上 4 个容器：`anheyu`（后端，内部再拉起 Next.js 前台）、`postgres:17`、`redis:7`、`caddy`（反向代理 + 自动 HTTPS）。只有 Caddy 暴露 80/443。
+正式域名：`blog.thpvip.xyz`。
 
-镜像由后端仓库 `custom` 分支的 `Build custom image` 工作流构建，推送到 `ghcr.io/haipengtian/anheyu-app`（标签 `custom` 和 `custom-<sha>`）。
+服务器上 3 个容器：`anheyu`（后端，内部再拉起 Next.js 前台）、`postgres:17`、`redis:7`。`anheyu` 只发布到 `127.0.0.1:8091`，由服务器上已有的主机 nginx 负责 HTTPS 和反向代理（这台服务器的 80/443 还给其他站点用，所以不用 Caddy）。
+
+镜像由后端仓库 `custom` 分支的 `Build custom image` 工作流构建，推送到 `ghcr.io/haipengtian/anheyu-app`（标签 `custom` 和 `custom-<sha>`）。镜像包是公开的，拉取不需要登录。
 
 ## 首次部署
 
-1. 服务器装好 Docker（含 `docker compose`），防火墙只放行 22、80、443
-2. 用只有 `read:packages` 权限的 GitHub token 登录：`docker login ghcr.io -u haipengTian`（token 不要写进任何文件）
-3. 把本目录传到服务器，例如 `/opt/anheyu/`
-4. `cp .env.example .env`，用 `openssl rand -hex 24` 生成三个不同的值填进去，`chmod 600 .env`
-5. 域名 A 记录指向服务器后：`chmod +x deploy.sh backup.sh && ./deploy.sh`
-6. 浏览器打开 `https://<SITE_DOMAIN>/login` 注册管理员（第一个注册的账号）
-7. 后台「系统设置 → 站点信息」把 `SITE_URL` 设为 `https://<SITE_DOMAIN>`；「备份导入」导入 `tools/brand/settings.json`
-8. 按 `tools/brand/README.md` 的清单清理初始化数据
+1. 服务器装好 Docker（含 `docker compose`）；云服务商安全组放行 80、443
+2. 把本目录放到 `/opt/anheyu/`：
+
+   ```bash
+   git clone --depth 1 -b custom https://github.com/haipengTian/anheyu-app.git /tmp/anheyu-src
+   mkdir -p /opt/anheyu && cp -r /tmp/anheyu-src/deploy/. /opt/anheyu/ && rm -rf /tmp/anheyu-src
+   ```
+
+3. `cd /opt/anheyu && cp .env.example .env`，用 `openssl rand -hex 24` 生成三个不同的值填进去，`chmod 600 .env`
+4. `chmod +x deploy.sh backup.sh && ./deploy.sh`，确认 `curl -sS http://127.0.0.1:8091/api/public/essays` 返回 `{"code":200,...}`
+5. DNS：`blog.thpvip.xyz` 的 A 记录指向服务器
+6. nginx：把 `nginx/blog.thpvip.xyz.conf` 放到 `/etc/nginx/conf.d/`，签发证书并填好 `ssl_certificate` 路径，`nginx -t && systemctl reload nginx`
+7. 浏览器打开 `https://blog.thpvip.xyz/login` 注册管理员（第一个注册的账号）
+8. 后台「系统设置 → 站点信息」把 `SITE_URL` 设为 `https://blog.thpvip.xyz`；「备份导入」导入 `tools/brand/settings.json`
+9. 按 `tools/brand/README.md` 的清单清理初始化数据
 
 ## 更新
 

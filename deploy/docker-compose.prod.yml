@@ -1,4 +1,5 @@
-# [custom] 生产编排：只有 caddy 暴露端口
+# [custom] 生产编排：复用服务器上已有的主机 nginx 做 HTTPS 和反向代理（见 nginx/anheyu.conf.example），
+# 应用只监听本机回环地址，不直接暴露到公网
 name: anheyu
 
 services:
@@ -25,8 +26,8 @@ services:
       - ./themes:/anheyu/themes
       - ./static:/anheyu/static
       - ./backup:/anheyu/backup
-    expose:
-      - "8091"
+    ports:
+      - "127.0.0.1:${ANHEYU_PORT:-8091}:8091"
 
   postgres:
     image: postgres:17
@@ -57,23 +58,6 @@ services:
     environment:
       - REDIS_PASSWORD=${ANHEYU_REDIS_PASSWORD}
 
-  caddy:
-    image: caddy:2
-    restart: always
-    depends_on:
-      - anheyu
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - SITE_DOMAIN=${SITE_DOMAIN:?在 .env 中设置}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
 volumes:
   pgdata:
   redisdata:
-  caddy_data:
-  caddy_config:
