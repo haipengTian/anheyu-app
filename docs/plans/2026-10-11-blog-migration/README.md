@@ -59,6 +59,7 @@
 | 前台 | `src/components/admin/article-editor/extensions/music-block.tsx` | `fetchMusicDetail` 加 `export` | 2 |
 | 前台 | `src/providers/console-printer.tsx` | import 指向新增的 `console-printer-custom.ts`（控制台欢迎语改为读取站点名，上游 `console-printer.ts` 不动） | 4 |
 | 前台 | `src/app/(frontend)/posts/[id]/page.tsx`、`src/app/(frontend)/doc/[id]/page.tsx` | `<meta property="article:author">` 默认值改为站点拥有者 | 4 |
+| 前台 | `src/components/post/PostDetailContent.tsx` | 底部栏改用新增的 `buildPostFooterText`（去掉写死的「安知鱼」兜底，文案改为「来自 X 的最新文章」） | 4（R4 用户决定） |
 
 其余全部是新增文件。
 
