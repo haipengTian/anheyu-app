@@ -4,7 +4,7 @@
 
 **Goal:** 前台看不到任何原作者信息（安知鱼 / 安和鱼 / AnHeYu / anheyu.com），站点身份换成 Super-Thp 的。
 
-**Architecture:** 以后台配置为主：一份 `tools/brand/settings.json` 通过后台「配置导入」一次写入，本地和新服务器复用。代码只动两处：控制台欢迎语（新文件 + 改 1 行 import）、文章页 `<meta name="author">` 的默认值（新的纯函数 + 两个页面各改 2 行）。初始化时写入的默认数据（友链、页面、默认文章）在后台删除或改写。
+**Architecture:** 以后台配置为主：一份 `tools/brand/settings.json` 通过后台「配置导入」一次写入，本地和新服务器复用。代码只动两处：控制台欢迎语（新文件 + 改 1 行 import）、文章页 `<meta property="article:author">`（OpenGraph 作者）的默认值（新的纯函数 + 两个页面各改 2 行）。初始化时写入的默认数据（友链、页面、默认文章）在后台删除或改写。
 
 **仓库：** 代码改动在前台仓库；`tools/brand/` 放后端仓库（配置和后端设置项一一对应）。
 
@@ -114,7 +114,7 @@ git commit -m "feat(brand): 控制台欢迎语改为读取站点配置"
 
 ---
 
-### Task R2：文章页 `<meta name="author">` 默认值
+### Task R2：文章页 `<meta property="article:author">` 默认值
 
 **Files:**
 - Test: `src/lib/seo-author.test.ts`（前台仓库）
@@ -200,7 +200,7 @@ import { resolveArticleAuthor } from "@/lib/seo-author"; // [custom]
 **Step 6：验证**
 
 Run: `npx tsc --noEmit 2>&1 | tail -3` → 不比阶段 2 多。
-Run: `curl -s http://localhost:3000/posts/<任意一篇迁移文章的 id> | grep -o '<meta name="author"[^>]*>'`
+Run: `curl -s http://localhost:3000/posts/<任意一篇文章的公开 id> | grep -o '<meta property="article:author"[^>]*>'`（公开 id 从 `GET /api/public/articles` 取；上游只把 authors 用在 OpenGraph，整站没有 `<meta name="author">`）
 Expected: `content="Super-Thp"`（Task R3 导入配置之后；之前是站点名）。
 
 **Step 7：提交**
@@ -337,7 +337,7 @@ Expected：没有任何输出。有输出就定位来源（配置 → 后台改�
 ## 阶段 4 验收（停下来向用户汇报）
 
 1. R1、R2 的测试结果和 `tsc` 结果
-2. 控制台截图、文章页 `meta author` 的 curl 输出
+2. 控制台截图、文章页 `article:author` 的 curl 输出
 3. Task R4 Step 3 的检查输出（应为空）
 4. 首页、文章页、`/essay`、页脚的截图
 5. 本阶段两个仓库的提交列表
