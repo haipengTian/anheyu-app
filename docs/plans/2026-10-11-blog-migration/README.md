@@ -57,7 +57,7 @@
 | 前台 | `src/components/home/HomePageContent.tsx` | 挂载 `EssayBar` | 2 |
 | 前台 | `src/components/home/HomePageContent.test.tsx` | mock 掉 `EssayBar`（测试里没有 `QueryClientProvider`） | 2 |
 | 前台 | `src/components/admin/article-editor/extensions/music-block.tsx` | `fetchMusicDetail` 加 `export` | 2 |
-| 前台 | `src/utils/console-printer.ts` | 控制台欢迎语改为读取站点名 | 4 |
+| 前台 | `src/providers/console-printer.tsx` | import 指向新增的 `console-printer-custom.ts`（控制台欢迎语改为读取站点名，上游 `console-printer.ts` 不动） | 4 |
 | 前台 | `src/app/(frontend)/posts/[id]/page.tsx`、`src/app/(frontend)/doc/[id]/page.tsx` | `<meta name="author">` 默认值改为站点拥有者 | 4 |
 
 其余全部是新增文件。
