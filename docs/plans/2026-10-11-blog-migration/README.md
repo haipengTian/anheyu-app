@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 把 Hexo 静态博客迁到二开的 anheyu-app：新增「即刻短文」，迁移全部内容，完成品牌化，部署到新服务器上线。
+**Goal:** 把 Hexo 静态博客换成二开的 anheyu-app：新增「即刻短文」，完成品牌化，部署到新服务器上线。旧内容不迁移，新站从零开始（2026-10-12 用户决定，见文末「计划变更记录」）。
 
-**Architecture:** 上游代码不动结构，二开只在 `custom` 分支上做"新增文件 + 少量挂载点"。即刻短文按上游 `doc_series` 模块的分层（ent schema → domain model/repo 接口 → ent repo → service → handler → 路由）新增；前台按 `doc-series` 后台页和 `recentcomments` 前台页的写法新增。内容迁移是前台仓库里一个独立的 Node 小工具，复用前台自己的 Markdown 渲染器。
+**Architecture:** 上游代码不动结构，二开只在 `custom` 分支上做"新增文件 + 少量挂载点"。即刻短文按上游 `doc_series` 模块的分层（ent schema → domain model/repo 接口 → ent repo → service → handler → 路由）新增；前台按 `doc-series` 后台页和 `recentcomments` 前台页的写法新增。
 
-**Tech Stack:** Go 1.25 + Ent + Gin（后端）；Next.js 16 + React 19 + TypeScript + HeroUI + TanStack Query + Vitest（前台）；Node 22 + tsx（迁移工具）；Docker Compose + Caddy + GitHub Actions + GHCR（部署）。
+**Tech Stack:** Go 1.25 + Ent + Gin（后端）；Next.js 16 + React 19 + TypeScript + HeroUI + TanStack Query + Vitest（前台）；Docker Compose + Caddy + GitHub Actions + GHCR（部署）。
 
 **设计文档：** [`../2026-10-11-anheyu-migration-design.md`](../2026-10-11-anheyu-migration-design.md)
 
@@ -18,7 +18,7 @@
 |---|---|---|
 | 后端 | `E:\workspace\code\blog\anheyu-app` | `custom` |
 | 前台 | `E:\workspace\code\blog\anheyu-app-frontend` | `custom` |
-| 旧博客（只读数据源） | `E:\workspace\personal\code\hexo-blog` | `master`（只在阶段 3 改一个标题） |
+| 旧博客（只读参考） | `E:\workspace\personal\code\hexo-blog` | `master`（不改动；品牌配置从这里取站点名、头像等） |
 
 计划里的路径：后端任务写的是相对 `anheyu-app/` 的路径，前台任务写的是相对 `anheyu-app-frontend/` 的路径。
 
@@ -28,9 +28,9 @@
 |---|---|---|---|
 | 1 | [01-essay-backend.md](01-essay-backend.md) | 即刻短文后端：表、接口、测试 | 无 |
 | 2 | [02-essay-frontend.md](02-essay-frontend.md) | 即刻短文前台页、首页滚动条、后台管理页 | 阶段 1 |
-| 3 | [03-content-migration.md](03-content-migration.md) | `tools/hexo-migrate`：文章、草稿、短文、相册一键导入 | 阶段 1（短文接口） |
+| ~~3~~ | ~~[03-content-migration.md](03-content-migration.md)~~ | **已跳过**（2026-10-12）：旧内容不迁移，文件保留备查 | — |
 | 4 | [04-branding.md](04-branding.md) | 2 处代码改动 + 品牌配置 JSON + 后台数据清理 | 阶段 2 |
-| 5 | [05-deploy.md](05-deploy.md) | 镜像构建、生产编排、HTTPS、备份、切换域名 | 阶段 1–4；**需要用户提供新服务器** |
+| 5 | [05-deploy.md](05-deploy.md) | 镜像构建、生产编排、HTTPS、备份、切换域名 | 阶段 1、2、4；**需要用户提供新服务器** |
 
 ## 执行规则
 
@@ -83,6 +83,13 @@ $env:NODE_OPTIONS = '--max-http-header-size=65536'; npx next dev
 
 | 风险 | 何时处理 |
 |---|---|
-| 图床 `img.thpvip.cn` 的 HTTPS 证书是自签名且已于 2026-09-19 过期；新站上 HTTPS 后所有 http 图片会被浏览器升级为 https 而加载失败 | 阶段 5 任务 D1（用户决定方案），阶段 3 的迁移工具预留了改写图片域名的参数 |
+| 图床 `img.thpvip.cn` 的 HTTPS 证书是自签名且已于 2026-09-19 过期；新站上 HTTPS 后 http 图片会被浏览器升级为 https 而加载失败。不迁移旧内容后，只影响品牌配置里的头像、Logo、页脚图片 | 阶段 5 任务 D1（用户决定方案） |
 | 上游的 `build.yml` 在推送 `main` 时会在 fork 里运行并可能失败 | 阶段 5 任务 D2：在 fork 的 Actions 设置里禁用上游工作流 |
-| 迁移工具调用接口需要管理员登录 | 阶段 3：用户在自己的终端里设置 `ANHEYU_EMAIL` / `ANHEYU_PASSWORD` 环境变量后运行，Claude 不接触密码 |
+| 切换正式域名后，旧 Hexo 文章的网址全部失效（内容仍在 hexo-blog 仓库） | 阶段 5 任务 D8 前和用户再确认一次；需要的文章可在后台粘贴 Markdown 重新发布 |
+
+## 计划变更记录
+
+| 日期 | 变更 | 影响 |
+|---|---|---|
+| 2026-10-12 | 用户决定不迁移旧 Hexo 内容，跳过阶段 3（9 个任务） | 阶段 4：首页分类按钮默认留空，「相册集」菜单在 R3 确认；阶段 5：D1 方案简化，D5 去掉数据导入，D7 去掉迁移统计 |
+| 2026-10-12 | 阶段 2 执行中的调整：后台表单上传框加「加入图片」按钮（用户选定）；首页挂载容器加 `empty:hidden`；滚动条图标不套上游描边样式；发布时间输入框加空占位符 | 见前台仓库 `custom` 分支提交记录 |

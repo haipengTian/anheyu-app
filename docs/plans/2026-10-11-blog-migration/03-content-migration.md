@@ -1,5 +1,7 @@
 # 阶段 3：内容迁移工具
 
+> **⛔ 已跳过（2026-10-12）**：用户决定不迁移旧 Hexo 内容，新站从零开始。本文件保留备查，**不要执行**。以后如果要重新迁移，先和用户确认，再按 README 的「计划变更记录」恢复阶段 4、5 里被删掉的导入步骤。
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 写一个可重复运行的迁移工具，把 hexo-blog 的 21 篇文章、5 篇草稿、`essay.yml`、`album.yml` 导入 anheyu-app；本地先跑通，阶段 5 原样对新服务器再跑一次。

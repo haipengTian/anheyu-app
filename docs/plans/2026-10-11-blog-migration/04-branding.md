@@ -233,6 +233,8 @@ git commit -m "feat(brand): 文章作者元信息默认使用站点拥有者"
 | `footer.owner.since` | 2020 | Hexo 页脚 |
 | `footer.runtime.*` | 上线时间 `04/01/2025 00:00:00`，上下班图片和文案沿用 Hexo | Hexo 页脚 |
 | Logo、favicon | 待确认（没有就暂用头像） | — |
+| `HOME_TOP.category`（首页顶部分类按钮） | 待确认（建议先留空 `[]`：旧文章不迁移，新站暂时没有分类；以后有了分类再在后台配置） | 2026-10-12 决定跳过阶段 3 |
+| `header.menu` 里的「相册集」 | 待确认（旧相册不迁移，是否保留这个菜单项） | 2026-10-12 决定跳过阶段 3 |
 
 **Step 2：写 `tools/brand/settings.json`**（确认后把 `待确认` 替换成实际值；配置导入接口接受 `{"settings": {...}}` 格式，只覆盖列出的键）
 
@@ -271,12 +273,14 @@ git commit -m "feat(brand): 文章作者元信息默认使用站点拥有者"
     "footer.bar.linkList": "[]",
     "header.menu": "[{\"title\":\"文章\",\"items\":[{\"title\":\"全部文章\",\"path\":\"/archives\",\"icon\":\"fa6-solid:book\",\"isExternal\":false},{\"title\":\"分类\",\"path\":\"/categories\",\"icon\":\"fa6-solid:shapes\",\"isExternal\":false},{\"title\":\"标签\",\"path\":\"/tags\",\"icon\":\"fa6-solid:tags\",\"isExternal\":false}]},{\"title\":\"我的\",\"items\":[{\"title\":\"相册集\",\"path\":\"/album\",\"icon\":\"fa6-solid:images\",\"isExternal\":false},{\"title\":\"即刻短文\",\"path\":\"/essay\",\"icon\":\"fa6-solid:feather\",\"isExternal\":false}]},{\"title\":\"关于\",\"items\":[{\"title\":\"关于本人\",\"path\":\"/about\",\"icon\":\"fa6-solid:paper-plane\",\"isExternal\":false},{\"title\":\"随便逛逛\",\"path\":\"/random-post\",\"icon\":\"fa6-solid:shoe-prints\",\"isExternal\":false}]}]",
     "header.nav.menu": "[]",
-    "HOME_TOP": "{\"title\":\"Super-Thp\",\"subTitle\":\"的个人空间。\",\"siteText\":\"THPVIP.CN\",\"category\":[{\"name\":\"核心原理\",\"path\":\"/categories/核心原理与面试/\",\"background\":\"linear-gradient(to right,#358bff,#15c6ff)\",\"icon\":\"fa6-solid:book\",\"isExternal\":false},{\"name\":\"运维踩坑\",\"path\":\"/categories/运维与实战踩坑/\",\"background\":\"linear-gradient(to right,#f65,#ffbf37)\",\"icon\":\"fa6-solid:fire\",\"isExternal\":false},{\"name\":\"AI 工具\",\"path\":\"/categories/AI与效率工具/\",\"background\":\"linear-gradient(to right,#18e7ae,#1eebeb)\",\"icon\":\"fa6-solid:robot\",\"isExternal\":false}],\"banner\":{\"tips\":\"\",\"title\":\"\",\"image\":\"\",\"link\":\"\",\"isExternal\":false}}"
+    "HOME_TOP": "{\"title\":\"Super-Thp\",\"subTitle\":\"的个人空间。\",\"siteText\":\"THPVIP.CN\",\"category\":[],\"banner\":{\"tips\":\"\",\"title\":\"\",\"image\":\"\",\"link\":\"\",\"isExternal\":false}}"
   }
 }
 ```
 
-> `HOME_TOP.banner.title` 留空即不显示右侧推荐位（`HomeTop.tsx` 里 `hasBanner` 依赖 `banner.title`）。分类路径用迁移后实际的分类名，导入后在 `/categories` 页核对。
+> `HOME_TOP.banner.title` 留空即不显示右侧推荐位（`HomeTop.tsx` 里 `hasBanner` 依赖 `banner.title`）。
+>
+> `HOME_TOP.category` 默认留空：2026-10-12 决定不迁移旧文章（跳过阶段 3），新站暂时没有分类，按钮指向不存在的分类页会 404。用户在 Step 1 想保留按钮时，每项格式为 `{"name","path":"/categories/<分类名>/","background","icon","isExternal":false}`，分类要先在后台建好。留空后首页顶部的效果在 R4 用浏览器确认。
 
 **Step 3：`tools/brand/README.md`**
 
@@ -326,7 +330,7 @@ for p in / /archives /categories /tags /essay /album /about /random-post /link; 
 done
 ```
 
-Expected：没有任何输出。有输出就定位来源（配置 → 后台改；数据 → 后台删；代码兜底值 → 说明原因后再决定是否改代码），处理后重跑直到无输出。另外随机打开 3 篇文章页重复检查。
+Expected：没有任何输出。有输出就定位来源（配置 → 后台改；数据 → 后台删；代码兜底值 → 说明原因后再决定是否改代码），处理后重跑直到无输出。另外打开文章页重复检查（不迁移旧文章，删掉默认文章后如果一篇都没有，先在后台发一篇测试文章，检查完再删）。
 
 ---
 

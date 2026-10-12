@@ -6,7 +6,7 @@
 
 **Architecture:** GitHub Actions 在 `custom` 分支推送时，构建前台（`next build` standalone）和后端（Linux 静态二进制），用上游 Dockerfile 的 `full` 目标打成一个镜像，推送到私有 GHCR。服务器上 4 个容器：`anheyu`（后端，内部再拉起 Next.js）、`postgres:17`、`redis:7`、`caddy`（反向代理 + 自动 HTTPS）。只有 Caddy 暴露 80/443。
 
-**前置条件：** 阶段 1–4 完成并已推送 `custom` 分支（推送前征得用户同意）；用户提供新服务器（建议 ≥ 2GB 内存、Linux x86_64、能 SSH）和域名解析权限。
+**前置条件：** 阶段 1、2、4 完成（阶段 3 已跳过）并已推送 `custom` 分支（推送前征得用户同意）；用户提供新服务器（建议 ≥ 2GB 内存、Linux x86_64、能 SSH）和域名解析权限。
 
 **凭证原则：** 服务器密码、SSH 私钥、GHCR 令牌、数据库密码都由用户在自己的终端里处理。Claude 只给命令和检查输出，不在对话里出现任何密钥。
 
@@ -14,17 +14,18 @@
 
 ### Task D1：图床 HTTPS 方案（用户决定）
 
-现状：`https://img.thpvip.cn` 返回的是签给 `www.cloudcdn.site` 的自签名证书，已于 2026-09-19 过期。新站是 HTTPS，浏览器会把页面里的 `http://img.thpvip.cn/...` 自动升级成 https 请求，结果加载失败。所有文章图片、头像、短文和相册图片都受影响。
+现状：`https://img.thpvip.cn` 返回的是签给 `www.cloudcdn.site` 的自签名证书，已于 2026-09-19 过期。新站是 HTTPS，浏览器会把页面里的 `http://img.thpvip.cn/...` 自动升级成 https 请求，结果加载失败。
+
+2026-10-12 决定不迁移旧内容（跳过阶段 3）后，受影响的只剩 `tools/brand/settings.json` 里引用的几张图（头像、Logo、页脚上下班图片），以及以后新内容如果还想用这个图床。
 
 | 方案 | 做法 | 优点 | 缺点 |
 |---|---|---|---|
-| **A（推荐）** | 在图床/CDN 服务商控制台给 `img.thpvip.cn` 配置免费 HTTPS 证书 | 改动最小；图片不经过新服务器 | 要登录 CDN 控制台操作，需确认服务商支持 |
-| B | Caddy 把 `https://thpvip.cn/img/*` 反代到 `http://img.thpvip.cn/*`，迁移时用 `--image-host https://thpvip.cn/img` 改写地址 | 不依赖 CDN 服务商 | 图片流量全部经过新服务器；多一层故障点 |
-| C | 把图片搬到支持 HTTPS 的新对象存储，迁移时改写地址 | 一劳永逸 | 工作量最大，要批量搬文件 |
+| **A（推荐）** | 在图床/CDN 服务商控制台给 `img.thpvip.cn` 配置免费 HTTPS 证书 | 改动最小；以后写文章还能继续用这个图床 | 要登录 CDN 控制台操作，需确认服务商支持 |
+| B | 把头像、Logo、页脚那几张图上传到新站后台（自带存储），改 `settings.json` 里的地址 | 不再依赖旧图床；只有几张图 | 以后新内容的图片也要传到新站或另找图床 |
 
 **Step 1：** 把上表给用户，等用户选。
-**Step 2（A）：** 用户配置完成后验证：`curl -sS -o /dev/null -w "%{http_code}\n" "https://img.thpvip.cn/hexo-blog/%E5%A4%B4%E5%83%8F.jpg"` → `200`，且不加 `-k` 不报证书错误。之后迁移用 `--image-host https://img.thpvip.cn`，并把 `tools/brand/settings.json` 里的 `http://img.thpvip.cn` 全部改成 https 后提交。
-**Step 2（B/C）：** 方案选定后再补写具体任务，先不实施。
+**Step 2（A）：** 用户配置完成后验证：`curl -sS -o /dev/null -w "%{http_code}\n" "https://img.thpvip.cn/hexo-blog/%E5%A4%B4%E5%83%8F.jpg"` → `200`，且不加 `-k` 不报证书错误。然后把 `tools/brand/settings.json` 里的 `http://img.thpvip.cn` 全部改成 https 后提交。
+**Step 2（B）：** 用户在新站后台上传图片后，把得到的地址替换进 `settings.json` 并提交；`grep -c "img.thpvip.cn" tools/brand/settings.json` → `0`。
 
 ---
 
@@ -311,23 +312,16 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 
 ---
 
-### Task D5：首次部署与数据导入
+### Task D5：首次部署
+
+> 2026-10-12 决定不迁移旧内容（跳过阶段 3），这里不再有数据导入步骤，新站从零开始。
 
 1. 服务器：`cd /opt/anheyu && chmod +x deploy.sh backup.sh && ./deploy.sh` → 4 个容器 `running`/`healthy`
 2. `curl -sS https://new.thpvip.cn/api/public/essays` → `{"code":200,...}`，证书有效（Caddy 自动签发）
 3. 用户在浏览器打开 `https://new.thpvip.cn/login` 注册管理员（第一个注册的账号）
 4. 后台「系统设置」把 `SITE_URL` 设为 `https://new.thpvip.cn`；导入 `tools/brand/settings.json`
-5. 迁移：用户在本机运行（图片域名参数按 D1 的结论）：
-   ```powershell
-   cd E:\workspace\code\blog\anheyu-app-frontend\tools\hexo-migrate
-   npm run build-data -- --image-host https://img.thpvip.cn
-   $env:ANHEYU_EMAIL = '管理员邮箱'
-   $env:ANHEYU_PASSWORD = Read-Host '管理员密码'
-   npm run apply -- --base https://new.thpvip.cn
-   ```
-   Expected：与阶段 3 Task M8 相同的统计
-6. 按阶段 4 Task R4 Step 2 清理默认数据；在后台补短文音乐、填关于页
-7. 把阶段 4 Task R4 Step 3 的残留检查脚本里的 `http://localhost:3000` 换成 `https://new.thpvip.cn` 再跑一遍 → 无输出
+5. 按阶段 4 Task R4 Step 2 清理默认数据、填关于页
+6. 把阶段 4 Task R4 Step 3 的残留检查脚本里的 `http://localhost:3000` 换成 `https://new.thpvip.cn` 再跑一遍 → 无输出
 
 ---
 
@@ -351,7 +345,6 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 
 - [ ] 后台发布一篇测试文章，前台首页和文章页**立即**可见（`REVALIDATE_TOKEN` 生效）；验收后删除
 - [ ] 短文增删改查正常，`/essay` 和首页滚动条正确
-- [ ] 迁移统计 26 篇、失败 0；抽查文章渲染正确（同阶段 3 Task M8 Step 4）
 - [ ] 图片全部能加载（浏览器控制台无 mixed content / 证书错误）
 - [ ] 残留检查脚本无输出
 - [ ] 手机端浏览正常（`resize_window` 375×812）
@@ -365,7 +358,7 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 1. 服务器 `.env`：`SITE_DOMAIN=thpvip.cn`；后台 `SITE_URL` 改为 `https://thpvip.cn`
 2. DNS：`thpvip.cn` 的 A 记录改为新服务器 IP（切换前把 TTL 调低到 300）
 3. `./deploy.sh`，等 Caddy 为 `thpvip.cn` 签好证书：`curl -sSI https://thpvip.cn | head -1` → `HTTP/2 200`
-4. 再跑一遍残留检查和 D7 前 4 项
+4. 再跑一遍残留检查和 D7 前 3 项
 5. 旧服务器保留一周；一周后由用户决定下线 Hexo、Webhook（`pm2 delete hexo-webhook`）和旧站点；`new.thpvip.cn` 的 DNS 记录删除
 
 ---
