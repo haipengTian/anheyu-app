@@ -320,7 +320,7 @@ git commit -m "chore(deploy): 新增生产编排、Caddy、部署与备份脚本
 2. `curl -sS https://new.thpvip.cn/api/public/essays` → `{"code":200,...}`，证书有效（Caddy 自动签发）
 3. 用户在浏览器打开 `https://new.thpvip.cn/login` 注册管理员（第一个注册的账号）
 4. 后台「系统设置」把 `SITE_URL` 设为 `https://new.thpvip.cn`；导入 `tools/brand/settings.json`
-5. 按阶段 4 Task R4 Step 2 清理默认数据、填关于页
+5. 按 `tools/brand/README.md`「导入后还要在后台手动做的」清单逐项处理（默认文章、友链、3 个页面、打赏收款码）；关于页已包含在 `settings.json` 里，不用手填
 6. 把阶段 4 Task R4 Step 3 的残留检查脚本里的 `http://localhost:3000` 换成 `https://new.thpvip.cn` 再跑一遍 → 无输出
 
 ---
