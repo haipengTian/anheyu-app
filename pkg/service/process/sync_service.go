@@ -105,6 +105,11 @@ func (s *syncService) getProviderForPolicy(policy *model.StoragePolicy) (storage
 
 // SyncDirectory 负责将存储提供者（本地或云端）的内容与数据库进行高性能的双向同步。
 func (s *syncService) SyncDirectory(ctx context.Context, ownerID uint, policy *model.StoragePolicy, virtualPath string) error {
+	// ImgBed's immutable remote IDs are independent of blog display names and
+	// directories. Reconciling by name would replace valid virtual records.
+	if policy.Type == constant.PolicyTypeImgBed {
+		return nil
+	}
 	log.Printf("【SYNC START】 Policy: '%s', virtualPath: '%s'", policy.Name, virtualPath)
 
 	provider, err := s.getProviderForPolicy(policy)

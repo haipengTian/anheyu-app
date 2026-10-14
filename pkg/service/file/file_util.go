@@ -258,7 +258,13 @@ func (s *serviceImpl) HardDeleteRecursively(
 					}
 
 					// 调用 provider.Delete
-					if delErr := provider.Delete(ctx, policy, []string{sourceToDelete}); delErr != nil {
+					if policy.Type == constant.PolicyTypeImgBed {
+						// Its directories exist only in the blog database; child
+						// objects have already been deleted by their immutable IDs.
+						if err := provider.DeleteDirectory(ctx, policy, fullVirtualPath); err != nil {
+							return err
+						}
+					} else if delErr := provider.Delete(ctx, policy, []string{sourceToDelete}); delErr != nil {
 						// 物理删除失败只记录日志，不中止整个数据库事务
 						log.Printf("【DELETE ERROR】删除物理目录 '%s' 失败: %v", sourceToDelete, delErr)
 					}
@@ -283,12 +289,18 @@ func (s *serviceImpl) HardDeleteRecursively(
 				} else {
 					provider, providerErr := s.GetProviderForPolicy(policy)
 					if providerErr != nil {
+						if policy.Type == constant.PolicyTypeImgBed {
+							return providerErr
+						}
 						log.Printf("【DELETE WARN】获取实体 %d 的存储驱动失败: %v", entityID, providerErr)
 					} else {
 						// 对于文件，entity.Source.String 已经是正确的路径（本地物理路径或云端虚拟路径）
 						sourceToDelete := entity.Source.String
 						log.Printf("【DELETE INFO】正在删除物理文件: %s", sourceToDelete)
 						if delErr := provider.Delete(ctx, policy, []string{sourceToDelete}); delErr != nil {
+							if policy.Type == constant.PolicyTypeImgBed {
+								return fmt.Errorf("删除图床文件失败，保留记录以便重试: %w", delErr)
+							}
 							log.Printf("【DELETE ERROR】删除物理文件 '%s' 失败: %v", sourceToDelete, delErr)
 						}
 					}

@@ -19,6 +19,7 @@ const (
 	PolicyTypeS3         StoragePolicyType = "aws_s3"
 	PolicyTypeQiniu      StoragePolicyType = "qiniu_kodo"
 	PolicyTypeUpyun      StoragePolicyType = "upyun"
+	PolicyTypeImgBed     StoragePolicyType = "imgbed"
 
 	// SecretValueMask 是 API 响应中表示敏感字段已配置的固定占位符。
 	SecretValueMask = "********"
@@ -65,7 +66,7 @@ const (
 // IsValid 检查给定的类型是否是受支持的存储策略类型
 func (t StoragePolicyType) IsValid() bool {
 	switch t {
-	case PolicyTypeLocal, PolicyTypeOneDrive, PolicyTypeTencentCOS, PolicyTypeAliOSS, PolicyTypeS3, PolicyTypeQiniu, PolicyTypeUpyun:
+	case PolicyTypeLocal, PolicyTypeOneDrive, PolicyTypeTencentCOS, PolicyTypeAliOSS, PolicyTypeS3, PolicyTypeQiniu, PolicyTypeUpyun, PolicyTypeImgBed:
 		return true
 	default:
 		return false

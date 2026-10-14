@@ -122,6 +122,10 @@ func (s *storagePolicyService) CreatePolicy(ctx context.Context, ownerID uint, p
 		if policy.Server == "" || policy.BucketName == "" || policy.AccessKey == "" || policy.SecretKey == "" {
 			return errors.New("对于又拍云存储策略, server (REST API endpoint), bucket_name (服务名), access_key (操作员), 和 secret_key (操作员密码) 是必填项")
 		}
+	case constant.PolicyTypeImgBed:
+		if err := storage.ValidateImgBedPolicy(policy); err != nil {
+			return err
+		}
 	}
 
 	// 1c. 委托给策略处理器，验证 settings 内部的字段
@@ -439,6 +443,28 @@ func (s *storagePolicyService) UpdatePolicy(ctx context.Context, policy *model.S
 		policyRepo := repos.StoragePolicy
 		fileRepo := repos.File
 
+		// Query actual records in the update transaction; ChildrenCount is not
+		// maintained by uploads. Include orphan/uploading entities without nodes.
+		if target.Type == constant.PolicyTypeImgBed || policy.Type == constant.PolicyTypeImgBed {
+			repointed := target.Type != policy.Type || strings.TrimRight(target.Server, "/") != strings.TrimRight(policy.Server, "/") || strings.Trim(target.BasePath, "/") != strings.Trim(policy.BasePath, "/")
+			if repointed {
+				used, err := repos.Entity.IsStoragePolicyUsedByEntities(ctx, target.ID)
+				if err != nil {
+					return fmt.Errorf("检查已有文件失败: %w", err)
+				}
+				if !used && target.NodeID != nil {
+					children, err := fileRepo.ListByParentIDUnscoped(ctx, *target.NodeID)
+					if err != nil {
+						return fmt.Errorf("检查已有文件失败: %w", err)
+					}
+					used = len(children) > 0
+				}
+				if used {
+					return errors.New("此策略已有文件，请新建图床策略后切换默认用途，不要修改原策略的类型、地址或目录")
+				}
+			}
+		}
+
 		// 检查 Flag 是否有变化，并且新的 Flag 不是空字符串
 		if policy.Flag != target.Flag && policy.Flag != "" {
 			// 查找当前拥有该 Flag 的其他策略
@@ -473,6 +499,13 @@ func (s *storagePolicyService) UpdatePolicy(ctx context.Context, policy *model.S
 		if policy.Type == constant.PolicyTypeUpyun {
 			if policy.Server == "" || policy.BucketName == "" || policy.AccessKey == "" || policy.SecretKey == "" {
 				return errors.New("对于又拍云存储策略, server (REST API endpoint), bucket_name (服务名), access_key (操作员), 和 secret_key (操作员密码) 是必填项")
+			}
+		}
+
+		// 图床凭据与公开访问配置校验。
+		if policy.Type == constant.PolicyTypeImgBed {
+			if err := storage.ValidateImgBedPolicy(policy); err != nil {
+				return err
 			}
 		}
 
