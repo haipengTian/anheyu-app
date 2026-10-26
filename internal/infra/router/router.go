@@ -345,6 +345,8 @@ func (r *Router) registerArticleRoutes(api *gin.RouterGroup) {
 	// 文章列表和创建接口：支持多人共创功能，普通用户也可以访问
 	articlesUser := api.Group("/articles").Use(r.mw.JWTAuth())
 	{
+		// 普通登录用户可读取已发布文章的登录可见内容；不复用后台编辑权限。
+		articlesUser.GET("/:id/login-required-content", r.articleHandler.GetLoginRequiredContent)
 		// 文章列表（普通用户只能查看自己的文章）
 		articlesUser.GET("", r.articleHandler.List)
 		// 创建文章（支持普通用户，需要检查多人共创配置，权限在handler层校验）

@@ -13,6 +13,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/anzhiyu-c/anheyu-app/pkg/domain/articlecontent"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/model"
 	"github.com/anzhiyu-c/anheyu-app/pkg/service/setting"
 )
@@ -122,7 +123,7 @@ func (s *SearchService) IndexArticle(ctx context.Context, article *model.Article
 		log.Println("[警告] 搜索引擎未初始化，跳过索引操作")
 		return nil
 	}
-	return searcher.IndexArticle(ctx, article)
+	return searcher.IndexArticle(ctx, articlecontent.PublicCopy(article))
 }
 
 // DeleteArticle 删除文章索引

@@ -31,10 +31,11 @@ const (
 	// Redis Key 命名空间前缀
 	KeyNamespace = "anheyu:"
 
-	KeyPrefixArticle       = KeyNamespace + "search:article:"
-	KeyPrefixIndex         = KeyNamespace + "search:index:"
-	KeyPrefixWords         = KeyNamespace + "search:words:"
-	KeyPrefixResultCache   = KeyNamespace + "search:result:"
+	// A fresh namespace prevents reads from the legacy index while startup rebuilds it.
+	KeyPrefixArticle       = KeyNamespace + "search:public-v2:article:"
+	KeyPrefixIndex         = KeyNamespace + "search:public-v2:index:"
+	KeyPrefixWords         = KeyNamespace + "search:public-v2:words:"
+	KeyPrefixResultCache   = KeyNamespace + "search:public-v2:result:"
 	ResultCacheTTL         = 10 * time.Minute
 	DefaultRedisAddr       = "localhost:6379"
 	RedisConnectionTimeout = 5 * time.Second

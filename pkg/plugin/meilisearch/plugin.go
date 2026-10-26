@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anzhiyu-c/anheyu-app/pkg/domain/articlecontent"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/model"
 	"github.com/anzhiyu-c/anheyu-app/pkg/plugin"
 	"github.com/anzhiyu-c/anheyu-app/pkg/plugin/sdk"
@@ -22,7 +23,7 @@ import (
 
 var reHTMLTags = regexp.MustCompile(`<[^>]*>`)
 
-const indexName = "articles"
+const indexName = "articles_public_v2"
 
 // Searcher 基于 Meilisearch 的搜索引擎实现
 type Searcher struct {
@@ -170,6 +171,7 @@ func (s *Searcher) Search(ctx context.Context, query string, page int, size int)
 }
 
 func (s *Searcher) IndexArticle(ctx context.Context, article *model.Article) error {
+	article = articlecontent.PublicCopy(article)
 	content := reHTMLTags.ReplaceAllString(article.ContentHTML, " ")
 	content = strings.TrimSpace(content)
 

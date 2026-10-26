@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	meiliIndexName = "articles"
+	meiliIndexName = "articles_public_v2"
 )
 
 // MeiliSearchSearcher 使用 MeiliSearch 实现的搜索器
@@ -151,15 +151,15 @@ func (s *MeiliSearchSearcher) Search(ctx context.Context, query string, page int
 	limit := int64(size)
 
 	searchRes, err := s.index.Search(query, &meilisearch.SearchRequest{
-		Offset:               offset,
-		Limit:                limit,
-		AttributesToRetrieve: []string{"*"},
+		Offset:                offset,
+		Limit:                 limit,
+		AttributesToRetrieve:  []string{"*"},
 		AttributesToHighlight: []string{"title", "content"},
-		HighlightPreTag:      "<mark>",
-		HighlightPostTag:     "</mark>",
-		AttributesToCrop:     []string{"content:150"},
-		CropMarker:           "...",
-		ShowMatchesPosition:  true,
+		HighlightPreTag:       "<mark>",
+		HighlightPostTag:      "</mark>",
+		AttributesToCrop:      []string{"content:150"},
+		CropMarker:            "...",
+		ShowMatchesPosition:   true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("MeiliSearch 查询失败: %w", err)

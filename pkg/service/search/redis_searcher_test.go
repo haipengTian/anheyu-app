@@ -243,14 +243,14 @@ func TestConstants(t *testing.T) {
 	})
 
 	t.Run("Key前缀常量", func(t *testing.T) {
-		if KeyPrefixArticle != "anheyu:search:article:" {
-			t.Errorf("文章Key前缀应该是 'anheyu:search:article:'，实际是 '%s'", KeyPrefixArticle)
+		if KeyPrefixArticle != "anheyu:search:public-v2:article:" {
+			t.Errorf("文章Key前缀应该是 'anheyu:search:public-v2:article:'，实际是 '%s'", KeyPrefixArticle)
 		}
-		if KeyPrefixIndex != "anheyu:search:index:" {
-			t.Errorf("索引Key前缀应该是 'anheyu:search:index:'，实际是 '%s'", KeyPrefixIndex)
+		if KeyPrefixIndex != "anheyu:search:public-v2:index:" {
+			t.Errorf("索引Key前缀应该是 'anheyu:search:public-v2:index:'，实际是 '%s'", KeyPrefixIndex)
 		}
-		if KeyPrefixWords != "anheyu:search:words:" {
-			t.Errorf("词条Key前缀应该是 'anheyu:search:words:'，实际是 '%s'", KeyPrefixWords)
+		if KeyPrefixWords != "anheyu:search:public-v2:words:" {
+			t.Errorf("词条Key前缀应该是 'anheyu:search:public-v2:words:'，实际是 '%s'", KeyPrefixWords)
 		}
 	})
 

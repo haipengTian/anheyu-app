@@ -21,6 +21,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/internal/app/task"
 	"github.com/anzhiyu-c/anheyu-app/internal/pkg/event"
 	"github.com/anzhiyu-c/anheyu-app/pkg/constant"
+	"github.com/anzhiyu-c/anheyu-app/pkg/domain/articlecontent"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/model"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/repository"
 	"github.com/anzhiyu-c/anheyu-app/pkg/idgen"
@@ -77,6 +78,7 @@ type Service interface {
 	BatchDelete(ctx context.Context, publicIDs []string) (*BatchDeleteResult, error)
 	List(ctx context.Context, options *model.ListArticlesOptions) (*model.ArticleListResponse, error)
 	GetPublicBySlugOrID(ctx context.Context, slugOrID string) (*model.ArticleDetailResponse, error)
+	GetLoginRequiredContent(ctx context.Context, slugOrID string) (string, error)
 	GetBySlugOrIDForPreview(ctx context.Context, slugOrID string) (*model.ArticleDetailResponse, error)
 	ListPublic(ctx context.Context, options *model.ListPublicArticlesOptions) (*model.ArticleListResponse, error)
 	ListHome(ctx context.Context) ([]model.ArticleResponse, error)
@@ -967,7 +969,7 @@ func (s *serviceImpl) GetPublicBySlugOrID(ctx context.Context, slugOrID string) 
 	// 注意：这里 useAbbrlinkAsID 设置为 false，确保返回的 ID 始终是公共ID
 	// 这样PRO版可以正确解码ID获取数据库ID
 	// abbrlink 信息仍然通过 Abbrlink 字段返回
-	mainArticleResponse := s.ToAPIResponse(article, false, true)
+	mainArticleResponse := s.ToAPIResponse(articlecontent.PublicCopy(article), false, true)
 	s.fillOwnerNickname(ctx, mainArticleResponse, nil)
 	relatedResponses := make([]*model.SimpleArticleResponse, 0, len(relatedArticles))
 	for _, rel := range relatedArticles {
@@ -982,6 +984,17 @@ func (s *serviceImpl) GetPublicBySlugOrID(ctx context.Context, slugOrID string) 
 	}
 
 	return detailResponse, nil
+}
+
+// GetLoginRequiredContent is only exposed by the JWT-protected reading route.
+// Use the public repository lookup so login never grants access to drafts,
+// archived, deleted, pending-review or taken-down articles.
+func (s *serviceImpl) GetLoginRequiredContent(ctx context.Context, slugOrID string) (string, error) {
+	article, err := s.repo.GetBySlugOrID(ctx, slugOrID)
+	if err != nil {
+		return "", err
+	}
+	return article.ContentHTML, nil
 }
 
 // GetBySlugOrIDForPreview 为预览模式获取文章，不过滤状态，不增加浏览量。
@@ -1425,7 +1438,7 @@ func (s *serviceImpl) GetPublicByID(ctx context.Context, publicID string) (*mode
 
 	article.ViewCount = article.ViewCount + redisIncr
 
-	resp := s.ToAPIResponse(article, true, true)
+	resp := s.ToAPIResponse(articlecontent.PublicCopy(article), true, true)
 	s.fillOwnerNickname(ctx, resp, nil)
 	return resp, nil
 }
@@ -1897,7 +1910,7 @@ func (s *serviceImpl) GetRandom(ctx context.Context) (*model.ArticleResponse, er
 	if err != nil {
 		return nil, err
 	}
-	resp := s.ToAPIResponse(article, true, true)
+	resp := s.ToAPIResponse(articlecontent.PublicCopy(article), true, true)
 	s.fillOwnerNickname(ctx, resp, nil)
 	return resp, nil
 }
@@ -1911,8 +1924,8 @@ func (s *serviceImpl) ListHome(ctx context.Context) ([]model.ArticleResponse, er
 	list := make([]model.ArticleResponse, len(articles))
 	ownerCache := make(map[uint]*ownerInfoCache)
 	for i, a := range articles {
-		a.ContentMd = ""
-		resp := s.ToAPIResponse(a, true, false)
+		resp := s.ToAPIResponse(articlecontent.PublicCopy(a), true, false)
+		resp.ContentMd = ""
 		s.fillOwnerInfo(ctx, resp, ownerCache)
 		list[i] = *resp
 	}
@@ -1928,12 +1941,12 @@ func (s *serviceImpl) ListPublic(ctx context.Context, options *model.ListPublicA
 	list := make([]model.ArticleResponse, len(articles))
 	ownerCache := make(map[uint]*ownerInfoCache)
 	for i, a := range articles {
+		resp := s.ToAPIResponse(articlecontent.PublicCopy(a), true, false)
 		// 只在不需要内容时清空 ContentMd（用于普通列表展示）
 		// 当 WithContent=true 时保留内容（用于知识库同步等场景）
 		if !options.WithContent {
-			a.ContentMd = ""
+			resp.ContentMd = ""
 		}
-		resp := s.ToAPIResponse(a, true, false)
 		s.fillOwnerInfo(ctx, resp, ownerCache)
 		list[i] = *resp
 	}

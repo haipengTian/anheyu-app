@@ -1002,8 +1002,10 @@ func (r *articleRepo) ListPublic(ctx context.Context, options *model.ListPublicA
 		entities, err = q.All(ctx)
 	} else {
 		// 默认只选择列表展示需要的字段
+		// 正文字段仅用于服务层识别登录可见区块，过滤历史摘要，不直接返回给列表客户端。
 		entities, err = q.Select(
 			article.FieldID, article.FieldCreatedAt, article.FieldUpdatedAt,
+			article.FieldContentHTML, article.FieldContentMd,
 			article.FieldTitle, article.FieldCoverURL, article.FieldStatus,
 			article.FieldViewCount, article.FieldWordCount, article.FieldReadingTime,
 			article.FieldIPLocation, article.FieldPrimaryColor, article.FieldIsPrimaryColorManual,

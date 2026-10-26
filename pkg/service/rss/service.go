@@ -54,7 +54,7 @@ func NewService(
 }
 
 // rssCacheKey RSS feed 缓存键
-const rssCacheKey = "rss:feed:latest"
+const rssCacheKey = "rss:feed:public-v2:latest"
 
 // rssCacheTTL RSS feed 缓存过期时间（1小时）
 const rssCacheTTL = 3600

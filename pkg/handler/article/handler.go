@@ -345,6 +345,28 @@ func (h *Handler) ListHome(c *gin.Context) {
 	response.Success(c, articles, "获取列表成功")
 }
 
+// GetLoginRequiredContent returns published article HTML after JWT authentication.
+func (h *Handler) GetLoginRequiredContent(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store, max-age=0")
+	c.Header("Vary", "Authorization")
+	claimsValue, exists := c.Get(auth.ClaimsKey)
+	claims, ok := claimsValue.(*auth.CustomClaims)
+	if !exists || !ok || claims == nil || claims.UserID == "" {
+		response.Fail(c, http.StatusUnauthorized, "请先登录后查看")
+		return
+	}
+	content, err := h.svc.GetLoginRequiredContent(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		if ent.IsNotFound(err) || errors.Is(err, constant.ErrNotFound) {
+			response.Fail(c, http.StatusNotFound, "文章未找到")
+		} else {
+			response.Fail(c, http.StatusInternalServerError, "加载登录可见内容失败")
+		}
+		return
+	}
+	response.Success(c, gin.H{"content_html": content}, "获取成功")
+}
+
 // GetPublic
 // @Summary      获取单篇公开文章及其上下文
 // @Description  根据文章的公共ID或Abbrlink获取详细信息，同时返回上一篇、下一篇和相关文章。

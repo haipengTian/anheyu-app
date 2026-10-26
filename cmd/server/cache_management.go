@@ -8,6 +8,7 @@ import (
 	"github.com/anzhiyu-c/anheyu-app/internal/app/middleware"
 	"github.com/anzhiyu-c/anheyu-app/internal/frontend"
 	cache_service "github.com/anzhiyu-c/anheyu-app/internal/service/cache"
+	"github.com/anzhiyu-c/anheyu-app/pkg/domain/articlecontent"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/model"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/repository"
 	cache_handler "github.com/anzhiyu-c/anheyu-app/pkg/handler/cache"
@@ -94,7 +95,7 @@ func newCacheManagement(revalidate *cache_service.RevalidateService, images *ima
 							}
 						}
 						if projected != nil {
-							source = append(source, projected)
+							source = append(source, articlecontent.PublicCopy(projected))
 						}
 					}
 				}

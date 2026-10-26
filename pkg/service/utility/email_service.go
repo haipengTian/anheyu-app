@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/anzhiyu-c/anheyu-app/pkg/constant"
+	"github.com/anzhiyu-c/anheyu-app/pkg/domain/articlecontent"
 	"github.com/anzhiyu-c/anheyu-app/pkg/domain/model"
 	"github.com/anzhiyu-c/anheyu-app/pkg/service/notification"
 	parser_service "github.com/anzhiyu-c/anheyu-app/pkg/service/parser"
@@ -649,6 +650,7 @@ func (s *emailService) SendVerificationEmail(ctx context.Context, toEmail, code 
 
 // SendArticlePushEmail 发送文章更新推送邮件
 func (s *emailService) SendArticlePushEmail(ctx context.Context, toEmail, unsubscribeToken string, article *model.Article) error {
+	article = articlecontent.PublicCopy(article)
 	appName := s.settingSvc.Get(constant.KeyAppName.String())
 	siteURL := s.settingSvc.Get(constant.KeySiteURL.String())
 
